@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>سجل حضور الطلاب</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal&display=swap" rel="stylesheet">
+<style>
+body { font-family:"Tajawal",sans-serif; background:#f4f6f8; margin:0; text-align:center; direction:rtl; }
+.container { max-width:700px; margin:auto; background:#fff; margin-top:30px; padding:20px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+h2 { color:#1a73e8; }
+table { width:100%; border-collapse: collapse; margin-top:15px; }
+th, td { padding:10px; border-bottom:1px solid #ddd; font-size:16px; }
+th { background:#1a73e8; color:white; }
+button { background:#1a73e8; color:white; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-size:16px; margin-top:15px; }
+.absent { background:#fdecea; color:#d93025; padding:3px 8px; border-radius:8px; }
+.present { background:#e6f4ea; color:#188038; padding:3px 8px; border-radius:8px; }
+a { color:#1a73e8; text-decoration:none; display:block; margin-top:15px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h2>سجل الحضور والغياب</h2>
+
+<table id="attendanceTable">
+<tr>
+<th>الاسم</th>
+<th>رقم الهوية</th>
+<th>الصف</th>
+<th>الفصل</th>
+<th>الحالة</th>
+<th>الوقت</th>
+<th>التاريخ</th>
+</tr>
+</table>
+
+<button onclick="exportExcel()">تصدير Excel</button>
+<a href="scan.html">العودة لصفحة المسح</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script>
+window.onload = () => {
+    const students = JSON.parse(localStorage.getItem("students") || "[]"); // كل الطلاب
+    const attendance = JSON.parse(localStorage.getItem("attendance") || "{}"); // الطلاب الحاضرون
+    const table = document.getElementById("attendanceTable");
+
+    students.forEach(s => {
+        const record = attendance[s.id];
+        const status = record ? 'حاضر' : 'غائب';
+        const time = record ? record.time : '';
+        const date = record ? record.date : '';
+        const row = `
+        <tr>
+            <td>${s.name}</td>
+            <td>${s.id}</td>
+            <td>${s.grade}</td>
+            <td>${s.class}</td>
+            <td class="${record ? 'present':'absent'}">${status}</td>
+            <td>${time}</td>
+            <td>${date}</td>
+        </tr>
+        `;
+        table.innerHTML += row;
+    });
+};
+
+function exportExcel() {
+    const table = document.getElementById("attendanceTable");
+    const wb = XLSX.utils.table_to_book(table, {sheet:"سجل الحضور"});
+    XLSX.writeFile(wb, "attendance.xlsx");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إنشاء رموز QR للطلاب</title>
+<style>
+body { font-family:"Tajawal",sans-serif; background:#f4f6f8; margin:0; padding:0; text-align:center; direction:rtl;}
+.container { max-width:700px; margin:30px auto; background:#fff; padding:20px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+h2 { color:#1a73e8; margin-bottom:20px;}
+input[type=file]{ margin-bottom:20px;}
+button { background:#1a73e8; color:white; border:none; padding:10px 18px; border-radius:8px; margin:5px; cursor:pointer; font-size:16px;}
+.qr-container { display:flex; flex-wrap:wrap; justify-content:center; gap:15px; margin-top:20px;}
+.qr-item { background:#f9f9f9; padding:10px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.qr-item canvas { display:block; margin:auto;}
+.qr-item p { margin:5px 0 0; font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>إنشاء رموز QR للطلاب</h2>
+<input type="file" id="fileInput" accept=".xlsx,.xls"/>
+<button onclick="generateQRs()">إنشاء الرموز</button>
+<br><br>
+<a href="index.html" style="color:#1a73e8;">العودة للصفحة الرئيسية</a>
+<div class="qr-container" id="qrContainer"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+<script>
+let students = [];
+
+function generateQRs(){
+    const fileInput = document.getElementById("fileInput");
+    if(fileInput.files.length===0){
+        alert("⚠️ اختر ملف Excel أولاً");
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data,{type:"array"});
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+        // مثال تنسيق: {ID:"ST001", name:"أحمد", civil:"123456", grade:"الصف الأول", class:"أ"}
+        students = jsonData.map((row,index)=>{
+            return {
+                id: row.ID || `ST${index+1}`,
+                name: row.name || "غير محدد",
+                civil: row.civil || "غير محدد",
+                grade: row.grade || "غير محدد",
+                class: row.class || "غير محدد"
+            };
+        });
+
+        displayQRs();
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function displayQRs(){
+    const container = document.getElementById("qrContainer");
+    container.innerHTML = "";
+    students.forEach(s=>{
+        const div = document.createElement("div");
+        div.className = "qr-item";
+        const p = document.createElement("p");
+        p.innerText = `${s.name} (${s.id})`;
+        div.appendChild(p);
+
+        const canvas = document.createElement("canvas");
+        QRCode.toCanvas(canvas, `STUDENT:${s.id}`, { width:150 }, function (error) {
+            if (error) console.error(error);
+        });
+        div.appendChild(canvas);
+
+        // زر التحميل
+        const downloadBtn = document.createElement("button");
+        downloadBtn.innerText = "تحميل الصورة";
+        downloadBtn.onclick = ()=>{
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL("image/png");
+            link.download = `${s.id}.png`;
+            link.click();
+        };
+        div.appendChild(downloadBtn);
+
+        container.appendChild(div);
+    });
+
+    // حفظ الطلاب في localStorage
+    localStorage.setItem("students", JSON.stringify(students));
+    alert(`✅ تم إنشاء ${students.length} رمز QR`);
+}
+</script>
+
+</body>
+</html>
