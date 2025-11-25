@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>نظام حضور الطلاب - Google Sheets + QR</title>
+
+  <!-- Tailwind للتنسيق -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- مكتبة مسح QR -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <!-- مكتبة Excel (SheetJS) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- مكتبة jsPDF لتوليد PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: "Tajawal", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      direction: rtl;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <div class="max-w-6xl mx-auto p-4 md:p-6">
+    <div class="bg-white rounded-2xl shadow-lg p-4 md:p-6">
+
+      <!-- العنوان العلوي -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold text-blue-600">نظام حضور الطلاب</h1>
+          <p class="text-gray-500 mt-1 text-sm">متصل بقاعدة بيانات Google Sheets ويدعم QR من Excel مع المتأخرين والغياب</p>
+        </div>
+        <div class="text-sm text-gray-600 text-left">
+          <div><span class="font-semibold">تاريخ اليوم:</span> <span id="todayLabel"></span></div>
+        </div>
+      </div>
+
+      <!-- أزرار الأقسام -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+        <button class="tab-btn bg-blue-600 text-white py-2 rounded-lg font-semibold" data-target="section-excel">
+          إنشاء QR من Excel
+        </button>
+        <button class="tab-btn bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold" data-target="section-scan">
+          مسح QR
+        </button>
+        <button class="tab-btn bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold" data-target="section-attendance">
+          سجل الحضور
+        </button>
+        <button class="tab-btn bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold" data-target="section-absent">
+          الغياب
+        </button>
+        <button class="tab-btn bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold" data-target="section-late">
+          المتأخرون
+        </button>
+      </div>
+
+      <!-- القسم 1: إنشاء QR من Excel -->
+      <div id="section-excel" class="section">
+        <h2 class="text-xl font-bold text-blue-600 mb-3">إنشاء رموز QR من ملف Excel</h2>
+        <p class="text-sm text-gray-600 mb-3">
+          يجب أن يحتوي الملف على الأعمدة:
+          <span class="font-mono bg-gray-100 px-2 py-1 rounded">ID, name, grade, class</span> و<span class="font-bold">ID</span> هو الرقم المدني.
+        </p>
+
+        <div class="flex flex-col md:flex-row gap-3 items-start md:items-center mb-4">
+          <input type="file" id="excelFile" accept=".xlsx,.xls"
+                 class="block w-full md:w-auto text-sm text-gray-700 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2" />
+          <button id="btnImportExcel"
+                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+            تحميل الطلاب من Excel وحفظهم في القاعدة
+          </button>
+          <button id="btnExportQRPdf"
+                  class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+            تصدير جميع رموز الطلاب إلى PDF
+          </button>
+        </div>
+
+        <div id="excelStatus" class="text-sm text-gray-600 mb-3"></div>
+
+        <div id="studentsContainer" class="mt-4">
+          <!-- سيتم ملء قائمة الطلاب -->
+        </div>
+      </div>
+
+      <!-- القسم 2: مسح QR -->
+      <div id="section-scan" class="section hidden">
+        <h2 class="text-xl font-bold text-blue-600 mb-3">مسح QR وتسجيل الحضور</h2>
+        <p class="text-sm text-gray-600 mb-3">
+          صيغة الكود في البطاقة:
+          <span class="font-mono bg-gray-100 px-2 py-1 rounded">
+            ID=1234567890;NAME=أحمد علي;GRADE=ثاني;CLASS=أ
+          </span>
+        </p>
+        <div id="reader" class="w-full max-w-md mx-auto"></div>
+        <p id="scanMessage" class="mt-4 text-sm font-semibold text-center"></p>
+      </div>
+
+      <!-- القسم 3: سجل الحضور -->
+      <div id="section-attendance" class="section hidden">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <h2 class="text-xl font-bold text-blue-600">سجل الحضور (محلي + Google Sheets)</h2>
+          <div class="flex flex-wrap gap-2">
+            <button id="btnExportAttendanceExcel"
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+              تصدير الحضور إلى Excel
+            </button>
+            <button id="btnClearAttendance"
+                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+              مسح سجل الحضور (محلي فقط)
+            </button>
+          </div>
+        </div>
+        <div class="overflow-x-auto border rounded-lg">
+          <table class="min-w-full text-sm" id="attendanceTable">
+            <thead class="bg-blue-600 text-white">
+              <tr>
+                <th class="px-3 py-2">الرقم المدني</th>
+                <th class="px-3 py-2">الاسم</th>
+                <th class="px-3 py-2">الصف</th>
+                <th class="px-3 py-2">الفصل</th>
+                <th class="px-3 py-2">الوقت</th>
+                <th class="px-3 py-2">التاريخ</th>
+                <th class="px-3 py-2">الحالة</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- القسم 4: الغياب -->
+      <div id="section-absent" class="section hidden">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <h2 class="text-xl font-bold text-blue-600">الطلاب الغائبون</h2>
+          <div class="flex items-center gap-2 text-sm">
+            <label for="absentDate">تاريخ اليوم:</label>
+            <input type="date" id="absentDate"
+                   class="border border-gray-300 rounded-lg px-2 py-1 text-sm" />
+            <button id="btnRefreshAbsent"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">
+              تحديث
+            </button>
+          </div>
+        </div>
+        <div class="overflow-x-auto border rounded-lg">
+          <table class="min-w-full text-sm" id="absentTable">
+            <thead class="bg-red-600 text-white">
+              <tr>
+                <th class="px-3 py-2">الرقم المدني</th>
+                <th class="px-3 py-2">الاسم</th>
+                <th class="px-3 py-2">الصف</th>
+                <th class="px-3 py-2">الفصل</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- القسم 5: المتأخرون -->
+      <div id="section-late" class="section hidden">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <h2 class="text-xl font-bold text-orange-600">الطلاب المتأخرون اليوم</h2>
+          <p class="text-sm text-gray-600">
+            وقت بداية الدوام المعتمد للتأخير:
+            <span id="lateTimeLabel" class="font-mono bg-gray-100 px-2 py-1 rounded"></span>
+          </p>
+        </div>
+        <div class="overflow-x-auto border rounded-lg">
+          <table class="min-w-full text-sm" id="lateTable">
+            <thead class="bg-orange-500 text-white">
+              <tr>
+                <th class="px-3 py-2">الرقم المدني</th>
+                <th class="px-3 py-2">الاسم</th>
+                <th class="px-3 py-2">الصف</th>
+                <th class="px-3 py-2">الفصل</th>
+                <th class="px-3 py-2">الوقت</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* =========================
+       إعدادات عامة
+    ========================= */
+
+    // رابط API من Google Apps Script
+    const API_URL = "https://script.google.com/macros/s/AKfycbw1QKMBnLBqBXqlXKgLznLXkH65z-04TOa2h2YPXdugkTjdn3-9EDiWzLmXEpFqnxUDwQ/exec";
+
+    // وقت اعتبار الطالب متأخر (تنسيقه HH:MM بنظام 24 ساعة)
+    const LATE_TIME = "04:00"; // يمكنك تعديله حسب دوام المدرسة
+
+    let students = [];      // قائمة الطلاب
+    let attendance = [];    // سجل الحضور (محلي)
+    let scanner = null;
+    let lastScanText = "";
+    let lastScanTime = 0;
+
+    const today = new Date();
+    document.getElementById("todayLabel").textContent = today.toLocaleDateString("ar-SA");
+    document.getElementById("lateTimeLabel").textContent = LATE_TIME;
+
+    function loadLocalAttendance() {
+      attendance = JSON.parse(localStorage.getItem("attendance") || "[]");
+    }
+
+    /* =========================
+       تبديل الأقسام
+    ========================= */
+    const sections = document.querySelectorAll(".section");
+    const tabButtons = document.querySelectorAll(".tab-btn");
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.dataset.target;
+
+        sections.forEach(sec => sec.classList.add("hidden"));
+        document.getElementById(target).classList.remove("hidden");
+
+        tabButtons.forEach(b => {
+          b.classList.remove("bg-blue-600","text-white");
+          b.classList.add("bg-gray-200","text-gray-800");
+        });
+        btn.classList.remove("bg-gray-200","text-gray-800");
+        btn.classList.add("bg-blue-600","text-white");
+
+        if (target === "section-attendance") renderAttendanceTable();
+        if (target === "section-absent") renderAbsentTable();
+        if (target === "section-late") renderLateTable();
+        if (target === "section-scan") startScannerIfNeeded();
+      });
+    });
+
+    /* =========================
+       استيراد الطلاب من Google Sheets
+    ========================= */
+    async function fetchStudentsFromSheet() {
+      try {
+        const url = `${API_URL}?action=getStudents&sheet=Students`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        // أول صف هو رؤوس الأعمدة: [ID, Name, Grade, Class, QR]
+        const rows = data.slice(1);
+        students = rows
+          .filter(r => r[0])
+          .map(r => ({
+            ID: String(r[0]).trim(),
+            name: r[1] || "",
+            grade: r[2] || "",
+            class: r[3] || ""
+          }));
+        renderStudentsList();
+        document.getElementById("excelStatus").textContent = `تم تحميل ${students.length} طالب من Google Sheets.`;
+      } catch (err) {
+        console.error(err);
+        document.getElementById("excelStatus").textContent = "تعذر الاتصال بقاعدة البيانات (Google Sheets).";
+      }
+    }
+
+    /* =========================
+       استيراد الطلاب من Excel + حفظ في Sheets
+    ========================= */
+    function importFromExcel() {
+      const fileInput = document.getElementById("excelFile");
+      if (!fileInput.files.length) {
+        alert("الرجاء اختيار ملف Excel أولاً");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet);
+
+        const imported = json
+          .map(row => ({
+            ID: row.ID ? String(row.ID).trim() : "",
+            name: row.name || "",
+            grade: row.grade || "",
+            class: row.class || ""
+          }))
+          .filter(s => s.ID && s.name);
+
+        if (imported.length === 0) {
+          alert("لم يتم العثور على بيانات طلاب صحيحة في الملف");
+          return;
+        }
+
+        const existingIds = new Set(students.map(s => s.ID));
+        const newOnes = imported.filter(s => !existingIds.has(s.ID));
+        students = [...students, ...newOnes];
+
+        document.getElementById("excelStatus").textContent =
+          `تم استيراد ${imported.length} طالب، والجدد منهم ${newOnes.length}. جاري الحفظ في Google Sheets...`;
+
+        for (const s of newOnes) {
+          const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class}`;
+          try {
+            const urlAdd = `${API_URL}?action=addStudent&sheet=Students&ID=${encodeURIComponent(s.ID)}&name=${encodeURIComponent(s.name)}&grade=${encodeURIComponent(s.grade)}&class=${encodeURIComponent(s.class)}&qr=${encodeURIComponent(qrData)}`;
+            await fetch(urlAdd);
+            const urlQR = `${API_URL}?action=saveQR&ID=${encodeURIComponent(s.ID)}&qr=${encodeURIComponent(qrData)}`;
+            await fetch(urlQR);
+          } catch (err) {
+            console.error("خطأ أثناء حفظ الطالب في Sheets:", err);
+          }
+        }
+
+        renderStudentsList();
+        document.getElementById("excelStatus").textContent =
+          `تم استيراد وحفظ ${newOnes.length} طالب جديد بنجاح.`;
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    /* =========================
+       عرض الطلاب + QR + زر تحميل
+    ========================= */
+    function renderStudentsList() {
+      const container = document.getElementById("studentsContainer");
+      if (students.length === 0) {
+        container.innerHTML = `<p class="text-gray-500 text-sm">لا توجد بيانات طلاب حالياً.</p>`;
+        return;
+      }
+
+      let html = `
+        <div class="overflow-x-auto border rounded-lg">
+          <table class="min-w-full text-sm">
+            <thead class="bg-blue-600 text-white">
+              <tr>
+                <th class="px-3 py-2">الرقم المدني (ID)</th>
+                <th class="px-3 py-2">الاسم</th>
+                <th class="px-3 py-2">الصف</th>
+                <th class="px-3 py-2">الفصل</th>
+                <th class="px-3 py-2">QR</th>
+                <th class="px-3 py-2">تحميل QR</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-100">
+      `;
+      students.forEach(s => {
+        const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class}`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+        html += `
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2">${s.ID}</td>
+            <td class="px-3 py-2">${s.name}</td>
+            <td class="px-3 py-2">${s.grade}</td>
+            <td class="px-3 py-2">${s.class}</td>
+            <td class="px-3 py-2">
+              <img src="${qrUrl}" alt="QR" class="w-16 h-16 border rounded-lg mx-auto" />
+            </td>
+            <td class="px-3 py-2 text-center">
+              <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+                      onclick="downloadSingleQR('${encodeURIComponent(qrData)}','${encodeURIComponent(s.name)}','${encodeURIComponent(s.ID)}')">
+                تحميل
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    function downloadSingleQR(qrEncoded, nameEncoded, idEncoded) {
+      const qrData = decodeURIComponent(qrEncoded);
+      const name = decodeURIComponent(nameEncoded);
+      const id = decodeURIComponent(idEncoded);
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}`;
+      const link = document.createElement("a");
+      link.href = qrUrl;
+      link.download = `QR_${name}_${id}.png`;
+      link.click();
+    }
+
+    /* =========================
+       تصدير جميع رموز الطلاب PDF
+    ========================= */
+    async function exportAllQRsPDF() {
+      if (students.length === 0) {
+        alert("لا توجد بيانات للطلاب لتصديرها");
+        return;
+      }
+      document.getElementById("excelStatus").textContent = "جارٍ توليد ملف PDF، انتظر قليلاً...";
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF("p", "mm", "a4");
+      let x = 10, y = 10;
+      const qrSize = 35;
+
+      const entries = await Promise.all(
+        students.map(s => {
+          return new Promise(resolve => {
+            const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class}`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => resolve({ img, student: s });
+            img.onerror = () => resolve(null);
+            img.src = qrUrl;
+          });
+        })
+      );
+
+      entries.forEach((entry, idx) => {
+        if (!entry) return;
+        const { img, student: s } = entry;
+        doc.addImage(img, "PNG", x, y, qrSize, qrSize);
+        doc.setFontSize(10);
+        doc.text(`الاسم: ${s.name}`, x + qrSize + 4, y + 10);
+        doc.text(`ID: ${s.ID}`, x + qrSize + 4, y + 16);
+        doc.text(`الصف: ${s.grade}`, x + qrSize + 4, y + 22);
+        doc.text(`الفصل: ${s.class}`, x + qrSize + 4, y + 28);
+
+        y += 45;
+        if (y > 260 && idx < entries.length - 1) {
+          doc.addPage();
+          y = 10;
+        }
+      });
+
+      doc.save("QR_Students.pdf");
+      document.getElementById("excelStatus").textContent = "تم توليد ملف PDF بنجاح.";
+    }
+
+    /* =========================
+       منطق الوقت / المتأخرين
+    ========================= */
+    function toMinutes(t) {
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    /* =========================
+       مسح QR وتسجيل الحضور
+    ========================= */
+    function parseQrText(text) {
+      const obj = {};
+      if (text.startsWith("ID=")) {
+        const parts = text.split(";");
+        parts.forEach(p => {
+          const [k, v] = p.split("=");
+          if (!k || !v) return;
+          obj[k.trim()] = v.trim();
+        });
+      } else if (text.startsWith("STUDENT:")) {
+        const id = text.split(":")[1]?.trim();
+        obj.ID = id;
+      }
+      return obj;
+    }
+
+    async function recordAttendanceLocalAndSheet(student) {
+      const now = new Date();
+      const time24 = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+ // HH:MM
+      const status = toMinutes(time24) > toMinutes(LATE_TIME) ? "متأخر" : "حاضر";
+
+      const record = {
+        ID: student.ID,
+        name: student.name,
+        grade: student.grade,
+        class: student.class,
+        time: time24,
+        date: now.toLocaleDateString("ar-SA"),
+        status: status
+      };
+
+      attendance.push(record);
+      localStorage.setItem("attendance", JSON.stringify(attendance));
+
+      try {
+        const url = `${API_URL}?action=recordAttendance` +
+                    `&ID=${encodeURIComponent(record.ID)}` +
+                    `&name=${encodeURIComponent(record.name)}` +
+                    `&grade=${encodeURIComponent(record.grade)}` +
+                    `&class=${encodeURIComponent(record.class)}` +
+                    `&time=${encodeURIComponent(record.time)}` +
+                    `&date=${encodeURIComponent(record.date)}` +
+                    `&status=${encodeURIComponent(record.status)}`;
+        await fetch(url);
+      } catch (err) {
+        console.error("خطأ أثناء إرسال الحضور إلى Sheets:", err);
+      }
+
+      renderAttendanceTable();
+    }
+
+    function startScannerIfNeeded() {
+      if (scanner) return;
+      scanner = new Html5Qrcode("reader");
+
+      Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+          const cameraId = cameras[0].id;
+          scanner.start(
+            cameraId,
+            { fps: 10, qrbox: 250 },
+            async (decodedText) => {
+              const now = Date.now();
+              if (decodedText === lastScanText && (now - lastScanTime) < 2000) {
+                return;
+              }
+              lastScanText = decodedText;
+              lastScanTime = now;
+
+              const data = parseQrText(decodedText);
+              if (!data.ID) {
+                document.getElementById("scanMessage").textContent = "❌ صيغة QR غير صحيحة";
+                document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-red-600";
+                return;
+              }
+
+              const student = students.find(s => String(s.ID) === String(data.ID));
+              if (!student) {
+                document.getElementById("scanMessage").textContent = "❌ الطالب غير موجود في النظام";
+                document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-red-600";
+                return;
+              }
+
+              await recordAttendanceLocalAndSheet(student);
+              document.getElementById("scanMessage").textContent = `✅ تم تسجيل حضور: ${student.name}`;
+              document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-green-600";
+            },
+            (errorMessage) => {
+              // يمكن تجاهل الأخطاء المتكررة أثناء المسح
+            }
+          ).catch(err => {
+            console.error("خطأ في تشغيل الكاميرا:", err);
+            document.getElementById("scanMessage").textContent = "تعذر تشغيل الكاميرا. تأكد من الأذونات و HTTPS.";
+            document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-red-600";
+          });
+        } else {
+          document.getElementById("scanMessage").textContent = "لا يوجد كاميرا متاحة";
+          document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-red-600";
+        }
+      }).catch(err => {
+        console.error(err);
+      });
+    }
+
+    /* =========================
+       جدول الحضور + التصدير
+    ========================= */
+    function renderAttendanceTable() {
+      const tbody = document.querySelector("#attendanceTable tbody");
+      tbody.innerHTML = "";
+      const rows = [...attendance].reverse();
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-50";
+
+        const status = r.status || "حاضر";
+        const statusColor = status === "متأخر" ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700";
+
+        tr.innerHTML = `
+          <td class="px-3 py-2">${r.ID}</td>
+          <td class="px-3 py-2">${r.name}</td>
+          <td class="px-3 py-2">${r.grade}</td>
+          <td class="px-3 py-2">${r.class}</td>
+          <td class="px-3 py-2">${r.time}</td>
+          <td class="px-3 py-2">${r.date}</td>
+          <td class="px-3 py-2">
+            <span class="px-2 py-1 text-xs rounded-full ${statusColor}">
+              ${status}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function clearAttendanceLocal() {
+      if (!confirm("هل أنت متأكد من مسح سجل الحضور المحلي؟ هذا لا يمسح البيانات من Google Sheets.")) return;
+      attendance = [];
+      localStorage.removeItem("attendance");
+      renderAttendanceTable();
+    }
+
+    function exportAttendanceExcel() {
+      if (attendance.length === 0) {
+        alert("لا توجد بيانات حضور للتصدير");
+        return;
+      }
+      const wsData = [["ID","Name","Grade","Class","Time","Date","Status"]];
+      attendance.forEach(r => {
+        wsData.push([r.ID, r.name, r.grade, r.class, r.time, r.date, r.status || "حاضر"]);
+      });
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+      XLSX.writeFile(wb, "Attendance.xlsx");
+    }
+
+    /* =========================
+       الغياب
+    ========================= */
+    function dateToISO(arDate) {
+      try {
+        const clean = arDate.replace(/\u200f/g,"");
+        const parts = clean.split(/[\/\-]/);
+        if (parts.length === 3) {
+          const d = parts[0].replace(/\D/g,"");
+          const m = parts[1].replace(/\D/g,"");
+          const y = parts[2].replace(/\D/g,"");
+          if (d && m && y) {
+            return `${y.padStart(4,"0")}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`;
+          }
+        }
+      } catch(e){}
+      return new Date().toISOString().split("T")[0];
+    }
+
+    function renderAbsentTable() {
+      const dateInput = document.getElementById("absentDate");
+      const selectedDate = dateInput.value || new Date().toISOString().split("T")[0];
+
+      const presentIDs = new Set(
+        attendance
+          .filter(r => dateToISO(r.date) === selectedDate)
+          .map(r => String(r.ID))
+      );
+
+      const tbody = document.querySelector("#absentTable tbody");
+      tbody.innerHTML = "";
+
+      students
+        .filter(s => !presentIDs.has(String(s.ID)))
+        .forEach(s => {
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-gray-50";
+          tr.innerHTML = `
+            <td class="px-3 py-2">${s.ID}</td>
+            <td class="px-3 py-2">${s.name}</td>
+            <td class="px-3 py-2">${s.grade}</td>
+            <td class="px-3 py-2">${s.class}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+    }
+
+    /* =========================
+       المتأخرون
+    ========================= */
+    function renderLateTable() {
+      const tbody = document.querySelector("#lateTable tbody");
+      tbody.innerHTML = "";
+
+      const todayISO = new Date().toISOString().split("T")[0];
+      const lateStudents = attendance.filter(r =>
+        dateToISO(r.date) === todayISO && (r.status === "متأخر")
+      );
+
+      lateStudents.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-50";
+        tr.innerHTML = `
+          <td class="px-3 py-2">${r.ID}</td>
+          <td class="px-3 py-2">${r.name}</td>
+          <td class="px-3 py-2">${r.grade}</td>
+          <td class="px-3 py-2">${r.class}</td>
+          <td class="px-3 py-2">${r.time}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* =========================
+       ربط الأزرار
+    ========================= */
+    document.getElementById("btnImportExcel").addEventListener("click", importFromExcel);
+    document.getElementById("btnExportQRPdf").addEventListener("click", exportAllQRsPDF);
+    document.getElementById("btnExportAttendanceExcel").addEventListener("click", exportAttendanceExcel);
+    document.getElementById("btnClearAttendance").addEventListener("click", clearAttendanceLocal);
+    document.getElementById("btnRefreshAbsent").addEventListener("click", renderAbsentTable);
+
+    /* =========================
+       تهيئة أولية عند تحميل الصفحة
+    ========================= */
+    window.addEventListener("load", () => {
+      document.getElementById("absentDate").value = new Date().toISOString().split("T")[0];
+      loadLocalAttendance();
+      fetchStudentsFromSheet();
+      renderAttendanceTable();
+    });
+  </script>
+
+</body>
+</html>
