@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>نظام حضور الطلاب - QR + Google Sheets + SMS</title>
+  <title>نظام حضور الطلاب - Google Sheets + QR</title>
 
-  <!-- Tailwind CSS -->
+  <!-- Tailwind للتنسيق -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- مكتبة مسح QR -->
@@ -14,11 +14,8 @@
   <!-- مكتبة Excel (SheetJS) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-  <!-- jsPDF لتوليد PDF -->
+  <!-- مكتبة jsPDF لتوليد PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <!-- Chart.js للإحصائيات -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     body {
@@ -32,28 +29,20 @@
   <div class="max-w-6xl mx-auto p-4 md:p-6">
     <div class="bg-white rounded-2xl shadow-lg p-4 md:p-6">
 
-      <!-- هيدر -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+      <!-- العنوان العلوي -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <h1 class="text-2xl md:text-3xl font-bold text-blue-600">نظام حضور الطلاب</h1>
-          <p class="text-gray-500 mt-1 text-sm">
-            متصل بقاعدة بيانات Google Sheets ويدعم QR و SMS للحضور، الغياب، والمتأخرين
-          </p>
+          <p class="text-gray-500 mt-1 text-sm">متصل بقاعدة بيانات Google Sheets ويدعم QR من Excel مع المتأخرين والغياب</p>
         </div>
-        <div class="text-sm text-gray-700 text-left">
+        <div class="text-sm text-gray-600 text-left">
           <div><span class="font-semibold">تاريخ اليوم:</span> <span id="todayLabel"></span></div>
-          <div id="smsBalance" class="mt-1 text-xs md:text-sm text-green-700 font-semibold">
-            جاري جلب رصيد الرسائل...
-          </div>
         </div>
       </div>
 
       <!-- أزرار الأقسام -->
-      <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
-        <button class="tab-btn bg-blue-600 text-white py-2 rounded-lg font-semibold" data-target="section-dashboard">
-          لوحة الإحصائيات
-        </button>
-        <button class="tab-btn bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold" data-target="section-excel">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+        <button class="tab-btn bg-blue-600 text-white py-2 rounded-lg font-semibold" data-target="section-excel">
           إنشاء QR من Excel
         </button>
         <button class="tab-btn bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold" data-target="section-scan">
@@ -70,68 +59,12 @@
         </button>
       </div>
 
-      <!-- لوحة الإحصائيات -->
-      <div id="section-dashboard" class="section">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-          <h2 class="text-xl font-bold text-blue-600">لوحة الإحصائيات لليوم المختار</h2>
-          <div class="flex items-center gap-2 text-sm">
-            <label for="dashboardDate">تاريخ الإحصائية:</label>
-            <input type="date" id="dashboardDate"
-                   class="border border-gray-300 rounded-lg px-2 py-1 text-sm" />
-            <button id="btnRefreshDashboard"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">
-              تحديث
-            </button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
-            <p class="text-gray-600 text-sm mb-1">إجمالي الطلاب</p>
-            <p id="statTotalStudents" class="text-2xl font-bold text-blue-700">0</p>
-          </div>
-          <div class="bg-green-50 border border-green-100 rounded-xl p-4">
-            <p class="text-gray-600 text-sm mb-1">الحاضرون اليوم</p>
-            <p id="statPresentToday" class="text-2xl font-bold text-green-700">0</p>
-          </div>
-          <div class="bg-orange-50 border border-orange-100 rounded-xl p-4">
-            <p class="text-gray-600 text-sm mb-1">المتأخرون اليوم</p>
-            <p id="statLateToday" class="text-2xl font-bold text-orange-700">0</p>
-          </div>
-          <div class="bg-red-50 border border-red-100 rounded-xl p-4">
-            <p class="text-gray-600 text-sm mb-1">الغائبون اليوم</p>
-            <p id="statAbsentToday" class="text-2xl font-bold text-red-700">0</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-gray-50 border rounded-xl p-4">
-            <h3 class="text-sm font-semibold text-gray-700 mb-2">عدد الحضور لآخر 7 أيام</h3>
-            <canvas id="chartLast7Days" height="160"></canvas>
-          </div>
-          <div class="bg-gray-50 border rounded-xl p-4">
-            <h3 class="text-sm font-semibold text-gray-700 mb-2">الحضور اليوم حسب الصف</h3>
-            <canvas id="chartByGrade" height="160"></canvas>
-          </div>
-        </div>
-
-        <div class="mt-6 bg-gray-50 border rounded-xl p-4">
-          <h3 class="text-sm font-semibold text-gray-700 mb-2">نسبة الحضور / التأخير / الغياب اليوم</h3>
-          <div class="w-full md:w-1/2 mx-auto">
-            <canvas id="chartStatusPie" height="180"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- إنشاء QR من Excel -->
-      <div id="section-excel" class="section hidden">
+      <!-- القسم 1: إنشاء QR من Excel -->
+      <div id="section-excel" class="section">
         <h2 class="text-xl font-bold text-blue-600 mb-3">إنشاء رموز QR من ملف Excel</h2>
         <p class="text-sm text-gray-600 mb-3">
           يجب أن يحتوي الملف على الأعمدة:
-          <span class="font-mono bg-gray-100 px-2 py-1 rounded">
-            ID, Name, Grade, Class, ParentMobile
-          </span>
-          حيث <span class="font-bold">ID</span> هو الرقم المدني، و<span class="font-bold">ParentMobile</span> رقم ولي الأمر.
+          <span class="font-mono bg-gray-100 px-2 py-1 rounded">ID, name, grade, class</span> و<span class="font-bold">ID</span> هو الرقم المدني.
         </p>
 
         <div class="flex flex-col md:flex-row gap-3 items-start md:items-center mb-4">
@@ -148,10 +81,13 @@
         </div>
 
         <div id="excelStatus" class="text-sm text-gray-600 mb-3"></div>
-        <div id="studentsContainer" class="mt-4"></div>
+
+        <div id="studentsContainer" class="mt-4">
+          <!-- سيتم ملء قائمة الطلاب -->
+        </div>
       </div>
 
-      <!-- مسح QR -->
+      <!-- القسم 2: مسح QR -->
       <div id="section-scan" class="section hidden">
         <h2 class="text-xl font-bold text-blue-600 mb-3">مسح QR وتسجيل الحضور</h2>
         <p class="text-sm text-gray-600 mb-3">
@@ -164,10 +100,10 @@
         <p id="scanMessage" class="mt-4 text-sm font-semibold text-center"></p>
       </div>
 
-      <!-- سجل الحضور -->
+      <!-- القسم 3: سجل الحضور -->
       <div id="section-attendance" class="section hidden">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-          <h2 class="text-xl font-bold text-blue-600">سجل الحضور</h2>
+          <h2 class="text-xl font-bold text-blue-600">سجل الحضور (محلي + Google Sheets)</h2>
           <div class="flex flex-wrap gap-2">
             <button id="btnExportAttendanceExcel"
                     class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
@@ -197,21 +133,17 @@
         </div>
       </div>
 
-      <!-- الغياب -->
+      <!-- القسم 4: الغياب -->
       <div id="section-absent" class="section hidden">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
           <h2 class="text-xl font-bold text-blue-600">الطلاب الغائبون</h2>
-          <div class="flex flex-wrap items-center gap-2 text-sm">
+          <div class="flex items-center gap-2 text-sm">
             <label for="absentDate">تاريخ اليوم:</label>
             <input type="date" id="absentDate"
                    class="border border-gray-300 rounded-lg px-2 py-1 text-sm" />
             <button id="btnRefreshAbsent"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">
               تحديث
-            </button>
-            <button id="btnSendAbsentSMS"
-                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">
-              إرسال رسائل الغياب لليوم المحدد
             </button>
           </div>
         </div>
@@ -230,7 +162,7 @@
         </div>
       </div>
 
-      <!-- المتأخرون -->
+      <!-- القسم 5: المتأخرون -->
       <div id="section-late" class="section hidden">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
           <h2 class="text-xl font-bold text-orange-600">الطلاب المتأخرون اليوم</h2>
@@ -259,32 +191,21 @@
   </div>
 
   <script>
-    // ============================
-    // إعدادات عامة
-    // ============================
-    const API_URL = "https://script.google.com/macros/s/AKfycbzr21L_ofTivGDoQrPguEJ2Yc70cQgQcDOXW7qXiXrVSLUWFWkWUgsluM28vgYJNSSNUA/exec";
+    /* =========================
+       إعدادات عامة
+    ========================= */
 
-    // SMS API
-    const SMS_API_URL = "https://app.mobile.net.sa/api/v1/send";
-    const SMS_BALANCE_URL = "https://app.mobile.net.sa/api/v1/get-balance";
-    const SMS_SENDER_NAME = "School1";
-    const SMS_API_KEY = "XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr"; // Bearer Token
+    // رابط API من Google Apps Script
+    const API_URL = "https://script.google.com/macros/s/AKfycbx4PKVybf33NP9-LVhSY1l1Mz1FoSCOY58v88YmzkJBmXdmgSvUoyTX-Q2XlVLWlavGEQ/exec";
 
-    // إعداد إرسال الرسائل
-    const SMS_AUTO_ON_LATE = true;
-    const SMS_AUTO_ON_ABSENT = true;
+    // وقت اعتبار الطالب متأخر (تنسيقه HH:MM بنظام 24 ساعة)
+    const LATE_TIME = "04:00"; // يمكنك تعديله حسب دوام المدرسة
 
-    // وقت اعتبار الطالب متأخراً (24 ساعة)
-    const LATE_TIME = "07:15";
-
-    let students = [];
-    let attendance = [];
+    let students = [];      // قائمة الطلاب
+    let attendance = [];    // سجل الحضور (محلي)
     let scanner = null;
     let lastScanText = "";
     let lastScanTime = 0;
-
-    let smsLateSent = {};
-    let smsAbsentSent = {};
 
     const today = new Date();
     document.getElementById("todayLabel").textContent = today.toLocaleDateString("ar-SA");
@@ -292,71 +213,11 @@
 
     function loadLocalAttendance() {
       attendance = JSON.parse(localStorage.getItem("attendance") || "[]");
-      smsLateSent = JSON.parse(localStorage.getItem("smsLateSent") || "{}");
-      smsAbsentSent = JSON.parse(localStorage.getItem("smsAbsentSent") || "{}");
     }
 
-    function saveSmsLateSent() {
-      localStorage.setItem("smsLateSent", JSON.stringify(smsLateSent));
-    }
-
-    function saveSmsAbsentSent() {
-      localStorage.setItem("smsAbsentSent", JSON.stringify(smsAbsentSent));
-    }
-
-    // ============================
-    // جلب رصيد الرسائل
-    // ============================
-    async function getBalance() {
-      const el = document.getElementById("smsBalance");
-      if (!el) return;
-      el.textContent = "جارٍ جلب رصيد الرسائل...";
-      try {
-        const res = await fetch(SMS_BALANCE_URL, {
-          method: "POST",
-          headers: {
-            "Accept": "application/json",
-            "Authorization": "Bearer " + SMS_API_KEY
-          },
-          body: ""
-        });
-
-        const text = await res.text();
-        console.log("BALANCE STATUS:", res.status);
-        console.log("BALANCE RESPONSE:", text);
-
-        if (!res.ok) {
-          el.textContent = `تعذر جلب الرصيد (خطأ ${res.status})`;
-          return;
-        }
-
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch(e) {
-          el.textContent = "تعذر قراءة استجابة الرصيد";
-          return;
-        }
-
-        let balanceVal = null;
-        if (data.balance !== undefined) balanceVal = data.balance;
-        else if (data.data && data.data.balance !== undefined) balanceVal = data.data.balance;
-        else if (data.credit !== undefined) balanceVal = data.credit;
-
-        if (balanceVal == null) {
-          el.textContent = "تعذر قراءة رصيد الرسائل من الاستجابة";
-        } else {
-          el.textContent = `رصيد الرسائل: ${balanceVal}`;
-        }
-      } catch (err) {
-        console.error("خطأ في جلب رصيد الرسائل:", err);
-        el.textContent = "خطأ في الاتصال بخدمة الرسائل";
-      }
-    }
-
-    // ============================
-    // تبديل الأقسام
-    // ============================
+    /* =========================
+       تبديل الأقسام
+    ========================= */
     const sections = document.querySelectorAll(".section");
     const tabButtons = document.querySelectorAll(".tab-btn");
 
@@ -378,60 +239,39 @@
         if (target === "section-absent") renderAbsentTable();
         if (target === "section-late") renderLateTable();
         if (target === "section-scan") startScannerIfNeeded();
-        if (target === "section-dashboard") updateDashboard();
       });
     });
 
-    // ============================
-    // جلب الطلاب من Google Sheets
-    // ============================
+    /* =========================
+       استيراد الطلاب من Google Sheets
+    ========================= */
     async function fetchStudentsFromSheet() {
       try {
-        const url = `${API_URL}?action=getStudents`;
+        const url = `${API_URL}?action=getStudents&sheet=Students`;
         const res = await fetch(url);
         const data = await res.json();
 
-        // يدعم شكلين: array of rows أو array of objects
-        if (Array.isArray(data) && data.length > 0 && Array.isArray(data[0])) {
-          // الشكل القديم: rows
-          // ترتيب الأعمدة في الشيت: ID, Name, Grade, Class, ParentMobile
-          const rows = data.slice(1);
-          students = rows
-            .filter(r => r[0])
-            .map(r => ({
-              ID: String(r[0]).trim(),
-              name: r[1] || "",
-              grade: r[2] || "",
-              class: r[3] || "",
-              parentMobile: r[4] || ""   // هنا كان الخطأ: كانت r[5]
-            }));
-        } else if (Array.isArray(data) && data.length > 0 && typeof data[0] === "object") {
-          // الشكل الجديد: objects
-          students = data
-            .filter(r => r.ID)
-            .map(r => ({
-              ID: String(r.ID).trim(),
-              name: r.Name || r.name || "",
-              grade: r.Grade || r.grade || "",
-              class: r.Class || r.class || "",
-              parentMobile: r.ParentMobile || r.parentMobile || ""
-            }));
-        } else {
-          students = [];
-        }
-
+        // أول صف هو رؤوس الأعمدة: [ID, Name, Grade, Class, QR]
+        const rows = data.slice(1);
+        students = rows
+          .filter(r => r[0])
+          .map(r => ({
+            ID: String(r[0]).trim(),
+            name: r[1] || "",
+            grade: r[2] || "",
+            class: r[3] || ""
+          }));
         renderStudentsList();
         document.getElementById("excelStatus").textContent = `تم تحميل ${students.length} طالب من Google Sheets.`;
-        updateDashboard();
       } catch (err) {
         console.error(err);
         document.getElementById("excelStatus").textContent = "تعذر الاتصال بقاعدة البيانات (Google Sheets).";
       }
     }
 
-    // ============================
-    // استيراد الطلاب من Excel + حفظ في الشيت
-    // ============================
+    /* =========================
+       استيراد الطلاب من Excel + حفظ في Sheets
+    ========================= */
     function importFromExcel() {
       const fileInput = document.getElementById("excelFile");
       if (!fileInput.files.length) {
@@ -447,14 +287,12 @@
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(sheet);
 
-        // نتوقع أعمدة: ID, Name, Grade, Class, ParentMobile
         const imported = json
           .map(row => ({
             ID: row.ID ? String(row.ID).trim() : "",
-            name: row.Name || row.name || "",
-            grade: row.Grade || row.grade || "",
-            class: row.Class || row.class || "",
-            parentMobile: row.ParentMobile || row.parentMobile || ""
+            name: row.name || "",
+            grade: row.grade || "",
+            class: row.class || ""
           }))
           .filter(s => s.ID && s.name);
 
@@ -471,16 +309,12 @@
           `تم استيراد ${imported.length} طالب، والجدد منهم ${newOnes.length}. جاري الحفظ في Google Sheets...`;
 
         for (const s of newOnes) {
-const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARENT=${s.parentMobile || ""}`;
+          const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class}`;
           try {
-            const urlAdd = `${API_URL}?action=addStudent` +
-                           `&ID=${encodeURIComponent(s.ID)}` +
-                           `&name=${encodeURIComponent(s.name)}` +
-                           `&grade=${encodeURIComponent(s.grade)}` +
-                           `&class=${encodeURIComponent(s.class)}` +
-                           `&ParentMobile=${encodeURIComponent(s.parentMobile || "")}` +
-                           `&qr=${encodeURIComponent(qrData)}`;
+            const urlAdd = `${API_URL}?action=addStudent&sheet=Students&ID=${encodeURIComponent(s.ID)}&name=${encodeURIComponent(s.name)}&grade=${encodeURIComponent(s.grade)}&class=${encodeURIComponent(s.class)}&qr=${encodeURIComponent(qrData)}`;
             await fetch(urlAdd);
+            const urlQR = `${API_URL}?action=saveQR&ID=${encodeURIComponent(s.ID)}&qr=${encodeURIComponent(qrData)}`;
+            await fetch(urlQR);
           } catch (err) {
             console.error("خطأ أثناء حفظ الطالب في Sheets:", err);
           }
@@ -489,14 +323,13 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
         renderStudentsList();
         document.getElementById("excelStatus").textContent =
           `تم استيراد وحفظ ${newOnes.length} طالب جديد بنجاح.`;
-        updateDashboard();
       };
       reader.readAsArrayBuffer(file);
     }
 
-    // ============================
-    // عرض قائمة الطلاب + QR + تحميل
-    // ============================
+    /* =========================
+       عرض الطلاب + QR + زر تحميل
+    ========================= */
     function renderStudentsList() {
       const container = document.getElementById("studentsContainer");
       if (students.length === 0) {
@@ -513,7 +346,8 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
                 <th class="px-3 py-2">الاسم</th>
                 <th class="px-3 py-2">الصف</th>
                 <th class="px-3 py-2">الفصل</th>
-                <th class="px-3 py-2">رقم ولي الأمر</th>
+				<th class="px-3 py-2">رقم الجوال </th>
+
                 <th class="px-3 py-2">QR</th>
                 <th class="px-3 py-2">تحميل QR</th>
               </tr>
@@ -521,7 +355,7 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
             <tbody class="bg-white divide-y divide-gray-100">
       `;
       students.forEach(s => {
-        const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class}`;
+        const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARENT=${s.parentmobile}`;
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
         html += `
           <tr class="hover:bg-gray-50">
@@ -529,7 +363,8 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
             <td class="px-3 py-2">${s.name}</td>
             <td class="px-3 py-2">${s.grade}</td>
             <td class="px-3 py-2">${s.class}</td>
-            <td class="px-3 py-2">${s.parentMobile || "-"}</td>
+		  <td class="px-3 py-2">${s.parentmobile}</td>
+
             <td class="px-3 py-2">
               <img src="${qrUrl}" alt="QR" class="w-16 h-16 border rounded-lg mx-auto" />
             </td>
@@ -557,9 +392,9 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
       link.click();
     }
 
-    // ============================
-    // تصدير جميع QR إلى PDF
-    // ============================
+    /* =========================
+       تصدير جميع رموز الطلاب PDF
+    ========================= */
     async function exportAllQRsPDF() {
       if (students.length === 0) {
         alert("لا توجد بيانات للطلاب لتصديرها");
@@ -607,120 +442,17 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
       document.getElementById("excelStatus").textContent = "تم توليد ملف PDF بنجاح.";
     }
 
-    // ============================
-    // الوقت / المتأخرين
-    // ============================
+    /* =========================
+       منطق الوقت / المتأخرين
+    ========================= */
     function toMinutes(t) {
       const [h, m] = t.split(":").map(Number);
       return h * 60 + m;
     }
 
-    // ============================
-    // SMS
-    // ============================
-    function normalizeMobile(mobile) {
-      if (!mobile) return "";
-      let m = String(mobile).trim();
-      m = m.replace(/[^\d]/g, "");
-      if (m.startsWith("00")) m = m.slice(2);
-      if (m.startsWith("966")) return m;
-      if (m.startsWith("0")) return "966" + m.slice(1);
-      if (m.length === 9 && m.startsWith("5")) return "966" + m;
-      return m;
-    }
-
-    async function sendSMS(mobile, message) {
-      const normalized = normalizeMobile(mobile);
-      if (!normalized) {
-        console.warn("لا يمكن إرسال رسالة، رقم الجوال غير صالح:", mobile);
-        return;
-      }
-      const payload = {
-        number: normalized,
-        senderName: SMS_SENDER_NAME,
-        sendAtOption: "NOW",
-        messageBody: message,
-        allow_duplicate: false
-      };
-
-      try {
-        const res = await fetch(SMS_API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": "Bearer " + SMS_API_KEY
-          },
-          body: JSON.stringify(payload)
-        });
-        const txt = await res.text();
-        console.log("SMS RESPONSE:", res.status, txt);
-        if (res.ok) {
-          getBalance(); // تحديث الرصيد بعد الإرسال
-        }
-      } catch (err) {
-        console.error("خطأ في الاتصال بـ SMS API:", err);
-      }
-    }
-
-    function buildLateMessage(student, record) {
-      return `ولي أمر الطالب ${student.name}،\n` +
-             `نحيطكم علماً بأن ابنكم وصل متأخراً إلى المدرسة اليوم.\n` +
-             `وقت الحضور: ${record.time}\n` +
-             `الصف: ${student.grade} - الفصل: ${student.class}`;
-    }
-
-    function buildAbsentMessage(student, dateISO) {
-      const d = new Date(dateISO);
-      const dateAr = isNaN(d.getTime()) ? dateISO : d.toLocaleDateString("ar-SA");
-      return `ولي أمر الطالب ${student.name}،\n` +
-             `نحيطكم علماً بأن ابنكم غائب عن اليوم الدراسي بتاريخ ${dateAr}.\n` +
-             `الصف: ${student.grade} - الفصل: ${student.class}`;
-    }
-
-    async function sendLateSMS(student, record) {
-      if (!SMS_AUTO_ON_LATE) return;
-      if (!student.parentMobile) return;
-      const todayISO = new Date().toISOString().split("T")[0];
-      const key = `${todayISO}_${student.ID}`;
-      if (smsLateSent[key]) return; // تم الإرسال مسبقاً
-      const msg = buildLateMessage(student, record);
-      await sendSMS(student.parentMobile, msg);
-      smsLateSent[key] = true;
-      saveSmsLateSent();
-    }
-
-    async function sendAbsentSMSForDate() {
-      if (!SMS_AUTO_ON_ABSENT) {
-        alert("إرسال رسائل الغياب معطّل في الإعدادات.");
-        return;
-      }
-      const dateInput = document.getElementById("absentDate");
-      const selectedDate = dateInput.value || new Date().toISOString().split("T")[0];
-
-      const attForDate = attendance.filter(r => dateToISO(r.date) === selectedDate);
-      const presentIDs = new Set(attForDate.map(r => String(r.ID)));
-
-      let count = 0;
-      for (const s of students) {
-        const idStr = String(s.ID);
-        if (presentIDs.has(idStr)) continue;
-        if (!s.parentMobile) continue;
-        const key = `${selectedDate}_${idStr}`;
-        if (smsAbsentSent[key]) continue;
-
-        const msg = buildAbsentMessage(s, selectedDate);
-        await sendSMS(s.parentMobile, msg);
-        smsAbsentSent[key] = true;
-        count++;
-      }
-      saveSmsAbsentSent();
-      alert(`تم إرسال رسائل الغياب لعدد ${count} من الطلاب.`);
-    }
-
-    // ============================
-    // مسح QR بالكاميرا الخلفية
-    // ============================
+    /* =========================
+       مسح QR وتسجيل الحضور
+    ========================= */
     function parseQrText(text) {
       const obj = {};
       if (text.startsWith("ID=")) {
@@ -739,11 +471,7 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
 
     async function recordAttendanceLocalAndSheet(student) {
       const now = new Date();
-
-      const hh = String(now.getHours()).padStart(2, "0");
-      const mm = String(now.getMinutes()).padStart(2, "0");
-      const time24 = `${hh}:${mm}`;
-
+      const time24 = now.toLocaleTimeString("ar-SA", { hour12: false }).slice(0,5); // HH:MM
       const status = toMinutes(time24) > toMinutes(LATE_TIME) ? "متأخر" : "حاضر";
 
       const record = {
@@ -767,71 +495,71 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
                     `&class=${encodeURIComponent(record.class)}` +
                     `&time=${encodeURIComponent(record.time)}` +
                     `&date=${encodeURIComponent(record.date)}` +
-                    `&ParentMobile=${encodeURIComponent(student.parentMobile || "")}`;
+                    `&status=${encodeURIComponent(record.status)}`;
         await fetch(url);
       } catch (err) {
         console.error("خطأ أثناء إرسال الحضور إلى Sheets:", err);
       }
 
-      if (status === "متأخر") {
-        await sendLateSMS(student, record);
-      }
-
       renderAttendanceTable();
-      updateDashboard();
     }
 
     function startScannerIfNeeded() {
       if (scanner) return;
-
       scanner = new Html5Qrcode("reader");
-      scanner.start(
-        { facingMode: { exact: "environment" } },
-        {
-          fps: 10,
-          qrbox: 250,
-          videoConstraints: {
-            facingMode: { exact: "environment" }
-          }
-        },
-        async (decodedText) => {
-          const now = Date.now();
-          if (decodedText === lastScanText && (now - lastScanTime) < 2000) return;
-          lastScanText = decodedText;
-          lastScanTime = now;
 
-          const data = parseQrText(decodedText);
-          if (!data.ID) {
-            document.getElementById("scanMessage").textContent = "❌ صيغة QR غير صحيحة";
+      Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+          const cameraId = cameras[0].id;
+          scanner.start(
+            cameraId,
+            { fps: 10, qrbox: 250 },
+            async (decodedText) => {
+              const now = Date.now();
+              if (decodedText === lastScanText && (now - lastScanTime) < 2000) {
+                return;
+              }
+              lastScanText = decodedText;
+              lastScanTime = now;
+
+              const data = parseQrText(decodedText);
+              if (!data.ID) {
+                document.getElementById("scanMessage").textContent = "❌ صيغة QR غير صحيحة";
+                document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-red-600";
+                return;
+              }
+
+              const student = students.find(s => String(s.ID) === String(data.ID));
+              if (!student) {
+                document.getElementById("scanMessage").textContent = "❌ الطالب غير موجود في النظام";
+                document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-red-600";
+                return;
+              }
+
+              await recordAttendanceLocalAndSheet(student);
+              document.getElementById("scanMessage").textContent = `✅ تم تسجيل حضور: ${student.name}`;
+              document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-green-600";
+            },
+            (errorMessage) => {
+              // يمكن تجاهل الأخطاء المتكررة أثناء المسح
+            }
+          ).catch(err => {
+            console.error("خطأ في تشغيل الكاميرا:", err);
+            document.getElementById("scanMessage").textContent = "تعذر تشغيل الكاميرا. تأكد من الأذونات و HTTPS.";
             document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-red-600";
-            return;
-          }
-
-          const student = students.find(s => String(s.ID) === String(data.ID));
-          if (!student) {
-            document.getElementById("scanMessage").textContent = "❌ الطالب غير موجود في النظام";
-            document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-red-600";
-            return;
-          }
-
-          await recordAttendanceLocalAndSheet(student);
-          document.getElementById("scanMessage").textContent = `✅ تم تسجيل حضور: ${student.name}`;
-          document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-green-600";
-        },
-        (errorMessage) => {
-          // أخطاء لحظية في القراءة يمكن تجاهلها
+          });
+        } else {
+          document.getElementById("scanMessage").textContent = "لا يوجد كاميرا متاحة";
+          document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-red-600";
         }
-      ).catch(err => {
-        console.error("خطأ في تشغيل الكاميرا:", err);
-        document.getElementById("scanMessage").textContent =
-          "تعذر تشغيل الكاميرا. تأكد أن الموقع يعمل عبر HTTPS وتم السماح باستخدام الكاميرا.";
-        document.getElementById("scanMessage").className = "mt-4 text-sm font-semibold text-red-600";
+      }).catch(err => {
+        console.error(err);
       });
     }
 
-    // ============================
-    // جدول الحضور + التصدير
-    // ============================
+    /* =========================
+       جدول الحضور + التصدير
+    ========================= */
     function renderAttendanceTable() {
       const tbody = document.querySelector("#attendanceTable tbody");
       tbody.innerHTML = "";
@@ -865,7 +593,6 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
       attendance = [];
       localStorage.removeItem("attendance");
       renderAttendanceTable();
-      updateDashboard();
     }
 
     function exportAttendanceExcel() {
@@ -883,9 +610,9 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
       XLSX.writeFile(wb, "Attendance.xlsx");
     }
 
-    // ============================
-    // الغياب
-    // ============================
+    /* =========================
+       الغياب
+    ========================= */
     function dateToISO(arDate) {
       try {
         const clean = arDate.replace(/\u200f/g,"");
@@ -930,9 +657,9 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
         });
     }
 
-    // ============================
-    // المتأخرون
-    // ============================
+    /* =========================
+       المتأخرون
+    ========================= */
     function renderLateTable() {
       const tbody = document.querySelector("#lateTable tbody");
       tbody.innerHTML = "";
@@ -956,178 +683,25 @@ const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARE
       });
     }
 
-    // ============================
-    // لوحة الإحصائيات
-    // ============================
-    let chartLast7Days = null;
-    let chartByGrade = null;
-    let chartStatusPie = null;
-
-    function getDashboardDateISO() {
-      const el = document.getElementById("dashboardDate");
-      return (el.value && el.value.trim()) || new Date().toISOString().split("T")[0];
-    }
-
-    function computeStatsForDate(dateISO) {
-      const totalStudents = students.length;
-      const attForDate = attendance.filter(r => dateToISO(r.date) === dateISO);
-
-      const presentIDs = new Set(attForDate.map(r => String(r.ID)));
-      const presentCount = presentIDs.size;
-      const lateCount = attForDate.filter(r => r.status === "متأخر").length;
-      const absentCount = Math.max(totalStudents - presentCount, 0);
-      const onTimeCount = Math.max(presentCount - lateCount, 0);
-
-      return { totalStudents, presentCount, lateCount, absentCount, onTimeCount, attForDate, presentIDs };
-    }
-
-    function updateDashboardCards() {
-      const dateISO = getDashboardDateISO();
-      const { totalStudents, presentCount, lateCount, absentCount } = computeStatsForDate(dateISO);
-
-      document.getElementById("statTotalStudents").textContent = totalStudents;
-      document.getElementById("statPresentToday").textContent = presentCount;
-      document.getElementById("statLateToday").textContent = lateCount;
-      document.getElementById("statAbsentToday").textContent = absentCount;
-    }
-
-    function updateChartLast7Days() {
-      const ctx = document.getElementById("chartLast7Days").getContext("2d");
-      if (chartLast7Days) chartLast7Days.destroy();
-
-      const days = [];
-      const counts = [];
-      const today = new Date();
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const iso = d.toISOString().split("T")[0];
-        const label = d.toLocaleDateString("ar-SA", { weekday: "short" });
-        days.push(label);
-
-        const attForDate = attendance.filter(r => dateToISO(r.date) === iso);
-        const presentIDs = new Set(attForDate.map(r => String(r.ID)));
-        counts.push(presentIDs.size);
-      }
-
-      chartLast7Days = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: days,
-          datasets: [{
-            label: "عدد الحضور",
-            data: counts
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { precision: 0 }
-            }
-          }
-        }
-      });
-    }
-
-    function updateChartByGrade() {
-      const ctx = document.getElementById("chartByGrade").getContext("2d");
-      if (chartByGrade) chartByGrade.destroy();
-
-      const dateISO = getDashboardDateISO();
-      const { attForDate } = computeStatsForDate(dateISO);
-
-      const grades = [...new Set(students.map(s => s.grade).filter(Boolean))];
-      const presentCounts = grades.map(g => {
-        const studentsInGrade = students.filter(s => s.grade === g).map(s => String(s.ID));
-        const presentIDs = new Set(
-          attForDate
-            .filter(r => studentsInGrade.includes(String(r.ID)))
-            .map(r => String(r.ID))
-        );
-        return presentIDs.size;
-      });
-
-      chartByGrade = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: grades,
-          datasets: [{
-            label: "عدد الحضور",
-            data: presentCounts
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { precision: 0 }
-            }
-          }
-        }
-      });
-    }
-
-    function updateChartStatusPie() {
-      const ctx = document.getElementById("chartStatusPie").getContext("2d");
-      if (chartStatusPie) chartStatusPie.destroy();
-
-      const dateISO = getDashboardDateISO();
-      const { onTimeCount, lateCount, absentCount } = computeStatsForDate(dateISO);
-
-      chartStatusPie = new Chart(ctx, {
-        type: "pie",
-        data: {
-          labels: ["حاضر في الوقت", "متأخر", "غائب"],
-          datasets: [{
-            data: [onTimeCount, lateCount, absentCount]
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "bottom" }
-          }
-        }
-      });
-    }
-
-    function updateDashboard() {
-      updateDashboardCards();
-      updateChartLast7Days();
-      updateChartByGrade();
-      updateChartStatusPie();
-    }
-
-    // ============================
-    // ربط الأزرار
-    // ============================
+    /* =========================
+       ربط الأزرار
+    ========================= */
     document.getElementById("btnImportExcel").addEventListener("click", importFromExcel);
     document.getElementById("btnExportQRPdf").addEventListener("click", exportAllQRsPDF);
     document.getElementById("btnExportAttendanceExcel").addEventListener("click", exportAttendanceExcel);
     document.getElementById("btnClearAttendance").addEventListener("click", clearAttendanceLocal);
     document.getElementById("btnRefreshAbsent").addEventListener("click", renderAbsentTable);
-    document.getElementById("btnRefreshDashboard").addEventListener("click", updateDashboard);
-    document.getElementById("btnSendAbsentSMS").addEventListener("click", sendAbsentSMSForDate);
 
-    // ============================
-    // تهيئة أولية عند تحميل الصفحة
-    // ============================
+    /* =========================
+       تهيئة أولية عند تحميل الصفحة
+    ========================= */
     window.addEventListener("load", () => {
-      const todayISO = new Date().toISOString().split("T")[0];
-      document.getElementById("absentDate").value = todayISO;
-      document.getElementById("dashboardDate").value = todayISO;
-
+      document.getElementById("absentDate").value = new Date().toISOString().split("T")[0];
       loadLocalAttendance();
       fetchStudentsFromSheet();
       renderAttendanceTable();
-      updateDashboard();
-      getBalance();
     });
   </script>
+
 </body>
 </html>
