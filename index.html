@@ -47,7 +47,7 @@
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
         <div>
           <h1 class="text-3xl font-bold moe-green">نظام حضور الطلاب</h1>
-          <p class="text-gray-500 mt-1 text-sm">متوافق مع معايير وزارة التعليم – QR + Google Sheets + SMS</p>
+          <p class="text-gray-500 mt-1 text-sm">متوافق مع وزارة التعليم – QR + Google Sheets + SMS</p>
         </div>
         <div class="text-sm text-gray-700">
           <div><strong>التاريخ:</strong> <span id="todayLabel"></span></div>
@@ -75,7 +75,7 @@
             <p id="statTotalStudents" class="text-2xl font-bold moe-green">0</p>
           </div>
           <div class="moe-card text-center">
-            <p class="text-gray-600 text-sm mb-1">الحاضرون</p>
+            <p class="text-gray-600 text-sm mb-1">الحاضرون اليوم</p>
             <p id="statPresentToday" class="text-2xl font-bold text-green-700">0</p>
           </div>
           <div class="moe-card text-center">
@@ -153,7 +153,7 @@
 
       <!-- LATE -->
       <div id="section-late" class="section hidden">
-        <h2 class="text-xl font-bold text-orange-600 mb-4">قائمة المتأخرين</h2>
+        <h2 class="text-xl font-bold text-orange-600 mb-4">المتأخرون اليوم</h2>
         <div class="moe-card overflow-x-auto">
           <table class="min-w-full text-sm" id="lateTable">
             <thead class="bg-orange-500 text-white">
@@ -187,6 +187,7 @@
     </div>
   </div>
 
+<!-- END OF PART 1 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
@@ -195,75 +196,88 @@
 /* =============================
     إعدادات عامة
 ============================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbx4PKVybf33NP9-LVhSY1l1Mz1FoSCOY58v88YmzkJBmXdmgSvUoyTX-Q2XlVLWlavGEQ/exec";
 
+// رابط Google Apps Script (نفس رابطك)
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbx4PKVybf33NP9-LVhSY1l1Mz1FoSCOY58v88YmzkJBmXdmgSvUoyTX-Q2XlVLWlavGEQ/exec";
+
+// إعدادات مزود SMS
 const SMS_API_URL = "https://app.mobile.net.sa/api/v1/send";
 const SMS_BALANCE_URL = "https://app.mobile.net.sa/api/v1/get-balance";
 const SMS_API_KEY = "XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr";
 const SMS_SENDER_NAME = "School1";
 
 let students = [];
+let attendance = [];
 let smsTarget = null;
 let scanner = null;
 
+document.getElementById("todayLabel").textContent =
+  new Date().toLocaleDateString("ar-SA");
+
 /* =============================
-   التبويبات
+    التبويبات
 ============================= */
-document.querySelectorAll(".tab-btn").forEach(btn => {
+
+document.querySelectorAll(".tab-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
-    // إخفاء كل الأقسام
-    document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
+    document.querySelectorAll(".section").forEach((s) => s.classList.add("hidden"));
+    document
+      .getElementById(btn.dataset.target)
+      .classList.remove("hidden");
 
-    // إظهار القسم المطلوب
-    document.getElementById(btn.dataset.target).classList.remove("hidden");
-
-    // تفعيل الزر
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("moe-tab-active"));
+    document.querySelectorAll(".tab-btn").forEach((b) =>
+      b.classList.remove("moe-tab-active")
+    );
     btn.classList.add("moe-tab-active");
 
-    // تشغيل الكاميرا عند قسم المسح
     if (btn.dataset.target === "section-scan") {
       setTimeout(() => startScanner(), 500);
     }
+
+    if (btn.dataset.target === "section-attendance") renderAttendance();
+    if (btn.dataset.target === "section-absent") renderAbsent();
+    if (btn.dataset.target === "section-late") renderLate();
   });
 });
 
 /* =============================
-   استيراد الطلاب من Excel
+    استيراد الطلاب من Excel
 ============================= */
-document.getElementById("btnImportExcel").addEventListener("click", () => {
-  const file = document.getElementById("excelFile").files[0];
-  const status = document.getElementById("excelStatus");
 
+document.getElementById("btnImportExcel").onclick = () => {
+  const file = document.getElementById("excelFile").files[0];
   if (!file) return alert("اختر ملف Excel أولاً");
 
   const reader = new FileReader();
-  reader.onload = e => {
-    const workbook = XLSX.read(e.target.result, { type: "array" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  reader.onload = (e) => {
+    const wb = XLSX.read(e.target.result, { type: "array" });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json(sheet);
 
-    students = json.map(r => ({
-      ID: r.ID,
-      name: r.Name,
-      grade: r.Grade,
-      class: r.Class,
-      parentMobile: r.ParentMobile || ""
+    students = json.map((r) => ({
+      ID: String(r.ID || "").trim(),
+      name: r.Name || "",
+      grade: r.Grade || "",
+      class: r.Class || "",
+      parentMobile: String(r.ParentMobile || "").trim(),
     }));
 
-    status.textContent = "تم استيراد " + students.length + " طالب.";
+    document.getElementById("excelStatus").textContent =
+      "تم استيراد " + students.length + " طالب.";
 
     renderStudents();
 
-    // حفظ الطلاب
-    students.forEach(s => saveStudent(s));
+    students.forEach((s) => saveStudentToSheet(s));
+
+    updateStats();
   };
 
   reader.readAsArrayBuffer(file);
-});
+};
 
-/* حفظ طالب في Google Sheet */
-function saveStudent(s) {
+/* حفظ طالب في Google Sheets */
+function saveStudentToSheet(s) {
   const form = new URLSearchParams();
   form.append("action", "addStudent");
   form.append("ID", s.ID);
@@ -277,59 +291,60 @@ function saveStudent(s) {
 }
 
 /* =============================
-   عرض الطلاب مع QR و SMS
+    عرض قائمة الطلاب + QR + SMS
 ============================= */
-function renderStudents() {
-  const container = document.getElementById("studentsContainer");
-  container.innerHTML = "";
 
+function renderStudents() {
   let html = `
-    <table class='min-w-full text-sm'>
-      <thead class='bg-green-700 text-white'>
-        <tr>
-          <th class='px-3 py-2'>ID</th>
-          <th class='px-3 py-2'>الاسم</th>
-          <th class='px-3 py-2'>الصف</th>
-          <th class='px-3 py-2'>الفصل</th>
-          <th class='px-3 py-2'>الجوال</th>
-          <th class='px-3 py-2'>QR</th>
-          <th class='px-3 py-2'>SMS</th>
-        </tr>
-      </thead>
-      <tbody>
+  <table class="min-w-full text-sm">
+    <thead class="bg-green-700 text-white">
+      <tr>
+        <th class="px-3 py-2">ID</th>
+        <th class="px-3 py-2">الاسم</th>
+        <th class="px-3 py-2">الصف</th>
+        <th class="px-3 py-2">الفصل</th>
+        <th class="px-3 py-2">الجوال</th>
+        <th class="px-3 py-2">QR</th>
+        <th class="px-3 py-2">SMS</th>
+      </tr>
+    </thead>
+    <tbody>
   `;
 
-  students.forEach(s => {
-    const qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARENT=${s.parentMobile}`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=150x150`;
+  students.forEach((s) => {
+    const qrData =
+      `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARENT=${s.parentMobile}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+      qrData
+    )}`;
 
     html += `
-      <tr class='border-b'>
-        <td class='px-3 py-2'>${s.ID}</td>
-        <td class='px-3 py-2'>${s.name}</td>
-        <td class='px-3 py-2'>${s.grade}</td>
-        <td class='px-3 py-2'>${s.class}</td>
-        <td class='px-3 py-2'>${s.parentMobile}</td>
-        <td class='px-3 py-2'><img src='${qrUrl}' class='w-16 mx-auto'></td>
-        <td class='px-3 py-2'>
-          <button onclick="openSMSModal('${s.ID}')" class='moe-btn px-3 py-1 rounded text-xs'>SMS</button>
+      <tr class="border-b">
+        <td class="px-3 py-2">${s.ID}</td>
+        <td class="px-3 py-2">${s.name}</td>
+        <td class="px-3 py-2">${s.grade}</td>
+        <td class="px-3 py-2">${s.class}</td>
+        <td class="px-3 py-2">${s.parentMobile}</td>
+        <td class="px-3 py-2"><img src="${qrUrl}" class="w-16 mx-auto"/></td>
+        <td class="px-3 py-2">
+          <button onclick="openSMSModal('${s.ID}')" class="moe-btn px-3 py-1 rounded text-xs">SMS</button>
         </td>
       </tr>
     `;
   });
 
   html += "</tbody></table>";
-  container.innerHTML = html;
+  document.getElementById("studentsContainer").innerHTML = html;
 }
 
 /* =============================
-   نافذة SMS
+    نافذة SMS
 ============================= */
+
 function openSMSModal(id) {
-  smsTarget = students.find(s => s.ID == id);
+  smsTarget = students.find((s) => s.ID == id);
   document.getElementById("smsTargetLabel").textContent =
-    `إرسال رسالة إلى ولي أمر الطالب: ${smsTarget.name} (${smsTarget.parentMobile})`;
-  document.getElementById("smsMessage").value = "";
+    `إرسال رسالة لولي أمر الطالب ${smsTarget.name} (${smsTarget.parentMobile})`;
   document.getElementById("smsModal").classList.remove("hidden");
 }
 
@@ -338,80 +353,95 @@ function closeSMSModal() {
 }
 
 /* تنسيق رقم الجوال */
-function normalizeMobile(m) {
-  if (!m) return "";
-  m = m.toString().replace(/\D/g, "");
-  if (m.startsWith("966")) return m;
-  if (m.startsWith("05")) return "966" + m.slice(1);
-  if (m.startsWith("5")) return "966" + m;
-  return m;
+function normalizeMobile(n) {
+  n = String(n).replace(/\D/g, "");
+  if (n.startsWith("966")) return n;
+  if (n.startsWith("05")) return "966" + n.slice(1);
+  if (n.startsWith("5")) return "966" + n;
+  return n;
 }
 
-/* إرسال SMS */
 async function confirmSendSMS() {
   const msg = document.getElementById("smsMessage").value.trim();
   if (!msg) return alert("اكتب نص الرسالة");
 
   const mobile = normalizeMobile(smsTarget.parentMobile);
-  if (!mobile) return alert("رقم ولي الأمر غير صالح");
+  if (!mobile) return alert("رقم الجوال غير صالح");
 
   const payload = {
     number: mobile,
     senderName: SMS_SENDER_NAME,
     sendAtOption: "NOW",
-    messageBody: msg
+    messageBody: msg,
   };
 
   await fetch(SMS_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Bearer " + SMS_API_KEY
+      Authorization: "Bearer " + SMS_API_KEY,
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
-  alert("تم إرسال الرسالة بنجاح");
+  alert("تم إرسال الرسالة");
   closeSMSModal();
 }
 
 /* =============================
-   تشغيل ماسح QR
+    تشغيل ماسح QR
 ============================= */
+
 function startScanner() {
   if (scanner) return;
 
   scanner = new Html5Qrcode("reader");
 
-  Html5Qrcode.getCameras().then(cams => {
-    if (!cams.length) return alert("لا يوجد كاميرا");
+  Html5Qrcode.getCameras().then((cams) => {
+    if (!cams.length) return alert("لا توجد كاميرا");
 
     scanner.start(
       cams[0].id,
       { fps: 10, qrbox: 250 },
-      qr => handleQR(qr)
+      (qr) => handleQR(qr)
     );
   });
 }
 
 function handleQR(text) {
-  document.getElementById("scanMessage").textContent = "تم المسح ✔";
-
   const parts = text.split(";");
   let data = {};
-
-  parts.forEach(p => {
+  parts.forEach((p) => {
     const [k, v] = p.split("=");
     data[k] = v;
   });
 
-  sendAttendance(data);
+  recordAttendance(data);
+  document.getElementById("scanMessage").textContent =
+    "تم تسجيل حضور: " + data.NAME;
 }
 
 /* =============================
-   إرسال حضور الطالب
+    تسجيل حضور الطالب
 ============================= */
-function sendAttendance(stu) {
+
+function recordAttendance(stu) {
+  const now = new Date();
+  const time = now.toLocaleTimeString("ar-SA");
+  const date = now.toLocaleDateString("ar-SA");
+
+  attendance.push({
+    ID: stu.ID,
+    name: stu.NAME,
+    grade: stu.GRADE,
+    class: stu.CLASS,
+    parent: stu.PARENT,
+    time,
+    date,
+    status: "حاضر",
+  });
+
+  // حفظ في Google Sheets
   const form = new URLSearchParams();
   form.append("action", "recordAttendance");
   form.append("ID", stu.ID);
@@ -419,34 +449,131 @@ function sendAttendance(stu) {
   form.append("grade", stu.GRADE);
   form.append("class", stu.CLASS);
   form.append("ParentMobile", stu.PARENT);
-  form.append("time", new Date().toLocaleTimeString());
-  form.append("date", new Date().toLocaleDateString("ar-SA"));
+  form.append("time", time);
+  form.append("date", date);
 
   fetch(API_URL, { method: "POST", body: form });
 
-  alert("تم تسجيل حضور الطالب");
+  renderAttendance();
+  updateStats();
 }
 
 /* =============================
-   جلب رصيد الرسائل
+    جدول الحضور
 ============================= */
+
+function renderAttendance() {
+  const tbody = document.querySelector("#attendanceTable tbody");
+  tbody.innerHTML = "";
+
+  attendance.forEach((r) => {
+    tbody.innerHTML += `
+      <tr class="border-b">
+        <td class="px-3 py-2">${r.ID}</td>
+        <td class="px-3 py-2">${r.name}</td>
+        <td class="px-3 py-2">${r.grade}</td>
+        <td class="px-3 py-2">${r.class}</td>
+        <td class="px-3 py-2">${r.parent}</td>
+        <td class="px-3 py-2">QR</td>
+        <td class="px-3 py-2">
+          <button onclick="openSMSModal('${r.ID}')" class="moe-btn px-3 py-1 rounded text-xs">SMS</button>
+        </td>
+        <td class="px-3 py-2">${r.time}</td>
+        <td class="px-3 py-2">${r.date}</td>
+        <td class="px-3 py-2">${r.status}</td>
+      </tr>
+    `;
+  });
+}
+
+/* =============================
+    الغياب
+============================= */
+
+function renderAbsent() {
+  const today = new Date().toLocaleDateString("ar-SA");
+  const presentIDs = attendance
+    .filter((r) => r.date === today)
+    .map((r) => r.ID);
+
+  const tbody = document.querySelector("#absentTable tbody");
+  tbody.innerHTML = "";
+
+  students
+    .filter((s) => !presentIDs.includes(s.ID))
+    .forEach((s) => {
+      tbody.innerHTML += `
+      <tr class="border-b">
+        <td class="px-3 py-2">${s.ID}</td>
+        <td class="px-3 py-2">${s.name}</td>
+        <td class="px-3 py-2">${s.grade}</td>
+        <td class="px-3 py-2">${s.class}</td>
+      </tr>
+      `;
+    });
+}
+
+/* =============================
+    المتأخرون
+============================= */
+function renderLate() {
+  const today = new Date().toLocaleDateString("ar-SA");
+
+  const lateList = attendance.filter(
+    (r) => r.date === today && r.status === "متأخر"
+  );
+
+  const tbody = document.querySelector("#lateTable tbody");
+  tbody.innerHTML = "";
+
+  lateList.forEach((r) => {
+    tbody.innerHTML += `
+      <tr class="border-b">
+        <td class="px-3 py-2">${r.ID}</td>
+        <td class="px-3 py-2">${r.name}</td>
+        <td class="px-3 py-2">${r.grade}</td>
+        <td class="px-3 py-2">${r.class}</td>
+        <td class="px-3 py-2">${r.time}</td>
+      </tr>
+    `;
+  });
+}
+
+/* =============================
+    تحديث الإحصائيات
+============================= */
+
+function updateStats() {
+  const today = new Date().toLocaleDateString("ar-SA");
+
+  const present = attendance.filter((a) => a.date === today).length;
+  const late = attendance.filter((a) => a.date === today && a.status === "متأخر").length;
+
+  document.getElementById("statTotalStudents").textContent = students.length;
+  document.getElementById("statPresentToday").textContent = present;
+  document.getElementById("statLateToday").textContent = late;
+  document.getElementById("statAbsentToday").textContent =
+    students.length - present;
+}
+
+/* =============================
+    جلب رصيد الرسائل
+============================= */
+
 async function getBalance() {
   const res = await fetch(SMS_BALANCE_URL, {
     method: "POST",
-    headers: {
-      "Authorization": "Bearer " + SMS_API_KEY
-    }
+    headers: { Authorization: "Bearer " + SMS_API_KEY },
   });
 
-  const txt = await res.text();
   let balance = "غير متاح";
-
   try {
-    const json = JSON.parse(txt);
-    balance = json.data.balance;
+    const data = await res.json();
+    balance = data.data.balance;
   } catch {}
 
-  document.getElementById("smsBalance").textContent = "رصيد الرسائل: " + balance;
+  document.getElementById("smsBalance").textContent =
+    "رصيد الرسائل: " + balance;
 }
 
 getBalance();
