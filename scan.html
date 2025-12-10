@@ -1,146 +1,63 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>نظام حضور الطلاب</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ماسح QR</title>
 
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-  <style>
-    body {
-      font-family: "Tajawal", sans-serif;
-      background: #f4f4f4;
-      padding: 20px;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 15px;
-    }
-
-    /* منطقة المعاينة الضرورية لعمل الكاميرا الخلفية على iPhone */
-    #preview {
-      width: 100%;
-      max-width: 350px;
-      height: 350px;
-      margin: auto;
-      background: #000;
-      border-radius: 10px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 25px;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-    }
-
-    th {
-      background: #017c67;
-      color: white;
-    }
-  </style>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  /* fullscreen camera */
+  #preview {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+  }
+</style>
 </head>
 
 <body>
 
-  <h2>مسح QR وتسجيل حضور الطلاب</h2>
+<div id="preview"></div>
 
-  <div id="preview"></div>
+<script>
+const html5QrCode = new Html5Qrcode("preview");
 
-  <table id="attendanceTable">
-    <tr>
-      <th>الرقم المدني</th>
-      <th>الاسم</th>
-      <th>الصف</th>
-      <th>الفصل</th>
-      <th>الوقت</th>
-      <th>التاريخ</th>
-    </tr>
-  </table>
+function onScanSuccess(decodedText) {
+  alert("Scanned: " + decodedText);
+}
 
-  <script>
-    // تحميل الحضور من localStorage
-    const attendance = JSON.parse(localStorage.getItem("attendance") || "[]");
-    const table = document.getElementById("attendanceTable");
+function onScanFailure(err) {}
 
-    function addToTable(student) {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${student.id}</td>
-            <td>${student.name}</td>
-            <td>${student.grade}</td>
-            <td>${student.class}</td>
-            <td>${student.time}</td>
-            <td>${student.date}</td>
-        `;
-        table.appendChild(row);
-    }
+async function startCam() {
+  try {
+    await html5QrCode.start(
+      { facingMode: { exact: "environment" } },
+      { fps: 10, qrbox: 300 },
+      onScanSuccess,
+      onScanFailure
+    );
+  } catch (e) {
+    console.warn("Fallback:", e);
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 300 },
+      onScanSuccess,
+      onScanFailure
+    );
+  }
+}
 
-    // عرض السجلات القديمة
-    attendance.forEach(addToTable);
-
-    // إعداد ماسح QR
-    const html5QrCode = new Html5Qrcode("preview");
-
-    function onScanSuccess(decodedText) {
-        const students = JSON.parse(localStorage.getItem("students") || "[]");
-        const student = students.find(s => s.id === decodedText);
-
-        if (!student) {
-            alert("الطالب غير موجود في النظام");
-            return;
-        }
-
-        const now = new Date();
-        const record = {
-            ...student,
-            time: now.toLocaleTimeString(),
-            date: now.toLocaleDateString()
-        };
-
-        attendance.push(record);
-        localStorage.setItem("attendance", JSON.stringify(attendance));
-        addToTable(record);
-    }
-
-    function onScanFailure(error) {
-        // يمكن تجاهل الأخطاء
-    }
-
-    // تشغيل الكاميرا الخلفية على iPhone و Android
-    async function startScanner() {
-      try {
-        await html5QrCode.start(
-          { facingMode: { exact: "environment" } }, // إجبار الكاميرا الخلفية
-          { fps: 10, qrbox: 250 },
-          onScanSuccess,
-          onScanFailure
-        );
-      } catch (err) {
-        console.warn("Fallback triggered:", err);
-
-        // fallback: تشغيل environment بدون exact
-        html5QrCode.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: 250 },
-          onScanSuccess,
-          onScanFailure
-        );
-      }
-    }
-
-    startScanner();
-  </script>
+startCam();
+</script>
 
 </body>
 </html>
