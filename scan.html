@@ -13,6 +13,22 @@
       background: #f4f4f4;
       padding: 20px;
     }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    /* منطقة المعاينة الضرورية لعمل الكاميرا الخلفية على iPhone */
+    #preview {
+      width: 100%;
+      max-width: 350px;
+      height: 350px;
+      margin: auto;
+      background: #000;
+      border-radius: 10px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -21,26 +37,23 @@
       border-radius: 8px;
       overflow: hidden;
     }
+
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
       text-align: center;
     }
+
     th {
       background: #017c67;
       color: white;
-    }
-    #preview {
-      width: 300px;
-      margin: auto;
-      padding: 10px;
     }
   </style>
 </head>
 
 <body>
 
-  <h2 style="text-align:center;">مسح QR وتسجيل حضور الطلاب</h2>
+  <h2>مسح QR وتسجيل حضور الطلاب</h2>
 
   <div id="preview"></div>
 
@@ -56,6 +69,7 @@
   </table>
 
   <script>
+    // تحميل الحضور من localStorage
     const attendance = JSON.parse(localStorage.getItem("attendance") || "[]");
     const table = document.getElementById("attendanceTable");
 
@@ -72,8 +86,10 @@
         table.appendChild(row);
     }
 
+    // عرض السجلات القديمة
     attendance.forEach(addToTable);
 
+    // إعداد ماسح QR
     const html5QrCode = new Html5Qrcode("preview");
 
     function onScanSuccess(decodedText) {
@@ -94,39 +110,37 @@
 
         attendance.push(record);
         localStorage.setItem("attendance", JSON.stringify(attendance));
-
         addToTable(record);
     }
 
     function onScanFailure(error) {
-        // تجاهل الأخطاء المتكررة أو السريعة
+        // يمكن تجاهل الأخطاء
     }
 
-    // اختيار الكاميرا الخلفية تلقائياً
-    Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length) {
+    // تشغيل الكاميرا الخلفية على iPhone و Android
+    async function startScanner() {
+      try {
+        await html5QrCode.start(
+          { facingMode: { exact: "environment" } }, // إجبار الكاميرا الخلفية
+          { fps: 10, qrbox: 250 },
+          onScanSuccess,
+          onScanFailure
+        );
+      } catch (err) {
+        console.warn("Fallback triggered:", err);
 
-            const backCamera = cameras.find(cam =>
-                cam.label.toLowerCase().includes("back") ||
-                cam.label.toLowerCase().includes("rear") ||
-                cam.label.toLowerCase().includes("environment")
-            );
+        // fallback: تشغيل environment بدون exact
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          onScanSuccess,
+          onScanFailure
+        );
+      }
+    }
 
-            const cameraId = backCamera ? backCamera.id : cameras[0].id;
-
-            html5QrCode.start(
-  { facingMode: { exact: "environment" } },
-  { fps: 10, qrbox: 250 },
-  onScanSuccess,
-  onScanFailure
-);
-        } else {
-            alert("لم يتم العثور على كاميرا");
-        }
-    }).catch(err => console.error(err));
+    startScanner();
   </script>
 
 </body>
 </html>
-
-
