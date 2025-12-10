@@ -115,11 +115,11 @@
             const cameraId = backCamera ? backCamera.id : cameras[0].id;
 
             html5QrCode.start(
-                cameraId,
-                { fps: 10, qrbox: 250 },
-                onScanSuccess,
-                onScanFailure
-            );
+  { facingMode: { exact: "environment" } },
+  { fps: 10, qrbox: 250 },
+  onScanSuccess,
+  onScanFailure
+);
         } else {
             alert("لم يتم العثور على كاميرا");
         }
@@ -128,3 +128,4 @@
 
 </body>
 </html>
+
