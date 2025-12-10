@@ -1,77 +1,130 @@
-<video id="preview" width="300" height="200"></video>
-<table id="attendanceTable">
-  <tr>
-    <th>الرقم المدني</th>
-    <th>الاسم</th>
-    <th>الصف</th>
-    <th>الفصل</th>
-    <th>الوقت</th>
-    <th>التاريخ</th>
-  </tr>
-</table>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام حضور الطلاب</title>
 
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-<script>
-const attendance = JSON.parse(localStorage.getItem("attendance") || "[]");
-const table = document.getElementById("attendanceTable");
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
-function addToTable(student) {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-        <td>${student.id}</td>
-        <td>${student.name}</td>
-        <td>${student.grade}</td>
-        <td>${student.class}</td>
-        <td>${student.time}</td>
-        <td>${student.date}</td>
-    `;
-    table.appendChild(row);
-}
+  <style>
+    body {
+      font-family: "Tajawal", sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 25px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #017c67;
+      color: white;
+    }
+    #preview {
+      width: 300px;
+      margin: auto;
+      padding: 10px;
+    }
+  </style>
+</head>
 
-const html5QrCode = new Html5Qrcode("preview");
+<body>
 
-function onScanSuccess(decodedText, decodedResult) {
-    // مثال: الطلاب مخزن في localStorage باسم "students"
-    const students = JSON.parse(localStorage.getItem("students") || "[]");
-    const student = students.find(s => s.id === decodedText);
+  <h2 style="text-align:center;">مسح QR وتسجيل حضور الطلاب</h2>
 
-    if(!student){
-        alert("الطالب غير موجود في النظام");
-        return;
+  <div id="preview"></div>
+
+  <table id="attendanceTable">
+    <tr>
+      <th>الرقم المدني</th>
+      <th>الاسم</th>
+      <th>الصف</th>
+      <th>الفصل</th>
+      <th>الوقت</th>
+      <th>التاريخ</th>
+    </tr>
+  </table>
+
+  <script>
+    const attendance = JSON.parse(localStorage.getItem("attendance") || "[]");
+    const table = document.getElementById("attendanceTable");
+
+    function addToTable(student) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${student.id}</td>
+            <td>${student.name}</td>
+            <td>${student.grade}</td>
+            <td>${student.class}</td>
+            <td>${student.time}</td>
+            <td>${student.date}</td>
+        `;
+        table.appendChild(row);
     }
 
-    // تسجيل الحضور
-    const now = new Date();
-    const record = {
-        ...student,
-        time: now.toLocaleTimeString(),
-        date: now.toLocaleDateString()
-    };
-    attendance.push(record);
-    localStorage.setItem("attendance", JSON.stringify(attendance));
-    
-    addToTable(record); // تحديث الجدول مباشرة
-    
-    // لا تعيد تحميل الصفحة، لا توقف الكاميرا
-}
+    attendance.forEach(addToTable);
 
-function onScanFailure(error) {
-    // يمكن تجاهل الأخطاء الصغيرة
-}
+    const html5QrCode = new Html5Qrcode("preview");
 
-// بدء تشغيل الكاميرا
-Html5Qrcode.getCameras().then(cameras => {
-    if(cameras && cameras.length) {
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: 250 },
-            onScanSuccess,
-            onScanFailure
-        );
-    } else {
-        alert("لم يتم العثور على كاميرا");
+    function onScanSuccess(decodedText) {
+        const students = JSON.parse(localStorage.getItem("students") || "[]");
+        const student = students.find(s => s.id === decodedText);
+
+        if (!student) {
+            alert("الطالب غير موجود في النظام");
+            return;
+        }
+
+        const now = new Date();
+        const record = {
+            ...student,
+            time: now.toLocaleTimeString(),
+            date: now.toLocaleDateString()
+        };
+
+        attendance.push(record);
+        localStorage.setItem("attendance", JSON.stringify(attendance));
+
+        addToTable(record);
     }
-}).catch(err => {
-    console.error(err);
-});
-</script>
+
+    function onScanFailure(error) {
+        // تجاهل الأخطاء المتكررة أو السريعة
+    }
+
+    // اختيار الكاميرا الخلفية تلقائياً
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+
+            const backCamera = cameras.find(cam =>
+                cam.label.toLowerCase().includes("back") ||
+                cam.label.toLowerCase().includes("rear") ||
+                cam.label.toLowerCase().includes("environment")
+            );
+
+            const cameraId = backCamera ? backCamera.id : cameras[0].id;
+
+            html5QrCode.start(
+                cameraId,
+                { fps: 10, qrbox: 250 },
+                onScanSuccess,
+                onScanFailure
+            );
+        } else {
+            alert("لم يتم العثور على كاميرا");
+        }
+    }).catch(err => console.error(err));
+  </script>
+
+</body>
+</html>
