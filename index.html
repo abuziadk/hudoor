@@ -34,15 +34,20 @@
 }
 
 .image-header{
-  background: #0B6E4F; /* لون خلفية بدل الفراغ */
+  width: 100%;
+  max-width: 1200px;          /* نفس عرض المحتوى */
+  margin: 14px auto 0;        /* مسافة من الأعلى وتوسيط */
+  border-radius: 16px;        /* حواف دائرية */
+  overflow: hidden;           /* مهم لقص الزوايا */
+  background: #0B6E4F;
 }
+
 
 .image-header img{
   width: 100%;
-  height: 200%;
-  object-fit: contain;
+  height: auto;
+  display: block;
 }
-
 
 
 
@@ -280,4 +285,5 @@
 
 </body>
 </html>
+
 
