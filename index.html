@@ -61,8 +61,14 @@
         <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-excel">إنشاء QR</button>
         <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-scan">مسح QR</button>
         <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-attendance">سجل الحضور</button>
+		
         <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-absent">الغياب</button>
         <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-late">المتأخرون</button>
+		<button onclick="exportAttendance()" 
+        class="moe-btn px-4 py-2 rounded-lg text-sm font-semibold mb-4">
+  تصدير الحضور إلى Excel
+</button>
+
       </div>
 
       <!-- DASHBOARD -->
@@ -273,6 +279,7 @@ document.getElementById("btnImportExcel").onclick = () => {
 
   reader.readAsArrayBuffer(file);
 };
+
 
 /* حفظ طالب في Google Sheets */
 function saveStudentToSheet(s) {
@@ -629,4 +636,4 @@ getBalance();
 </html>
 
 
-<!-- END OF PART 1 -->
+
