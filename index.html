@@ -280,7 +280,6 @@ document.getElementById("btnImportExcel").onclick = () => {
   reader.readAsArrayBuffer(file);
 };
 
-
 /* حفظ طالب في Google Sheets */
 function saveStudentToSheet(s) {
   const form = new URLSearchParams();
@@ -400,12 +399,7 @@ async function confirmSendSMS() {
 /* =============================
    تشغيل ماسح QR بالكاميرا الخلفية
 ============================= */
-/* =============================
-    تشغيل ماسح QR – نسخة مستقرة
-============================= */
-
 function startScanner() {
-  // إيقاف أي ماسح سابق لمنع الأخطاء
   if (scanner) {
     try { scanner.stop(); } catch {}
   }
@@ -413,64 +407,22 @@ function startScanner() {
   scanner = new Html5Qrcode("reader");
 
   Html5Qrcode.getCameras().then((cams) => {
-    if (!cams.length) {
-      alert("لا توجد كاميرات متاحة");
-      return;
-    }
+    if (!cams.length) return alert("لا توجد كاميرا متاحة");
 
-    // اختيار الكاميرا الخلفية
-    let backCam = cams.find(c =>
+    // اختيار الكاميرا الخلفية تلقائياً
+    let backCam = cams.find(c => 
       c.label.toLowerCase().includes("back") ||
       c.label.toLowerCase().includes("rear")
     );
 
-    let camId = backCam ? backCam.id : cams[0].id;
+    let camId = backCam ? backCam.id : cams[cams.length - 1].id;
 
     scanner.start(
       camId,
-      {
-        fps: 10,
-        qrbox: { width: 300, height: 300 },
-        aspectRatio: 1.0,
-        disableFlip: true
-      },
-      (decodedText) => {
-        scanner.stop(); // إيقاف الماسح بعد نجاح القراءة
-        handleQR(decodedText);
-      },
-      (errorMessage) => {
-        // تجاهل الأخطاء العادية أثناء البحث
-      }
-    ).catch((err) => {
-      console.error("Scanner start error:", err);
-    });
+      { fps: 10, qrbox: 250 },
+      (qr) => handleQR(qr)
+    );
   });
-}
-
-/* =============================
-    تحليل محتوى الـ QR
-============================= */
-function handleQR(text) {
-  console.log("Scanned QR:", text);
-
-  const parts = text.split(";");
-  let data = {};
-
-  parts.forEach((p) => {
-    const [k, v] = p.split("=");
-    data[k] = v;
-  });
-
-  if (!data.ID) {
-    document.getElementById("scanMessage").textContent =
-      "الرمز غير صحيح";
-    return;
-  }
-
-  document.getElementById("scanMessage").textContent =
-    "تم تسجيل الحضور: " + data.NAME;
-
-  recordAttendance(data);
 }
 
 /* =============================
