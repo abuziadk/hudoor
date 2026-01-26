@@ -401,29 +401,58 @@ async function confirmSendSMS() {
 ============================= */
 function startScanner() {
   if (scanner) {
-    try { scanner.stop(); } catch {}
+    try { scanner.stop(); } catch(e){}
   }
 
   scanner = new Html5Qrcode("reader");
 
-  Html5Qrcode.getCameras().then((cams) => {
-    if (!cams.length) return alert("لا توجد كاميرا متاحة");
+  // محاولة إجبار الجوال على استخدام الكاميرا الخلفية
+  const config = {
+    fps: 10,
+    qrbox: { width: 280, height: 280 },
+    aspectRatio: 1.0,
+    experimentalFeatures: {
+      useBarCodeDetectorIfSupported: true
+    }
+  };
 
-    // اختيار الكاميرا الخلفية تلقائياً
-    let backCam = cams.find(c => 
-      c.label.toLowerCase().includes("back") ||
-      c.label.toLowerCase().includes("rear")
-    );
+  scanner.start(
+    { facingMode: { exact: "environment" } },  // الكاميرا الخلفية بالقوة
+    config,
+    (decodedText) => {
+      scanner.stop();
+      handleQR(decodedText);
+    },
+    (errorMessage) => {}
+  )
+  .catch(() => {
+    // في حال فشل إجبار الكاميرا الخلفية → نبحث عنها يدويًا
+    Html5Qrcode.getCameras().then((cams) => {
+      if (!cams.length) {
+        alert("لا توجد كاميرات متاحة");
+        return;
+      }
 
-    let camId = backCam ? backCam.id : cams[cams.length - 1].id;
+      let backCam = cams.find(c =>
+        c.label.toLowerCase().includes("back") ||
+        c.label.toLowerCase().includes("rear")
+      );
 
-    scanner.start(
-      camId,
-      { fps: 10, qrbox: 250 },
-      (qr) => handleQR(qr)
-    );
+      let camId = backCam ? backCam.id : cams[0].id;
+
+      scanner.start(
+        camId,
+        config,
+        (decodedText) => {
+          scanner.stop();
+          handleQR(decodedText);
+        },
+        (err) => {}
+      );
+    });
   });
 }
+
 
 /* =============================
     تسجيل حضور الطالب
