@@ -401,10 +401,10 @@ function startScanner() {
   scanner = new Html5Qrcode("reader");
 
   Html5Qrcode.getCameras().then((cams) => {
-    if (!cams.length) return alert("لا توجد كاميرا متاحة");
+    if (!cams.length) return alert("لا توجد كاميرات");
 
-    // اختيار الكاميرا الخلفية تلقائياً
-    let backCam = cams.find(c => 
+    // اختيار الكاميرا الخلفية
+    let backCam = cams.find(c =>
       c.label.toLowerCase().includes("back") ||
       c.label.toLowerCase().includes("rear")
     );
@@ -413,11 +413,14 @@ function startScanner() {
 
     scanner.start(
       camId,
-      { fps: 10, qrbox: 250 },
-      (qr) => handleQR(qr)
-    );
-  });
-}
+      {
+        fps: 10,
+        qrbox: { width: 320, height: 320 },   // مهم جداً للجوال
+        aspectRatio: 1.0,
+        disableFlip: true                     // يحل مشكلة قراءة بعض الأكواد
+      },
+      (decodedText) => {
+        handleQR
 
 /* =============================
     تسجيل حضور الطالب
