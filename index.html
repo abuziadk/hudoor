@@ -1,367 +1,585 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>نظام حضور الطلاب</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام حضور الطلاب - وزارة التعليم</title>
 
-<style>
-body {
-    font-family: "Tajawal", sans-serif;
-    background: #f4f6f8;
-    margin: 0;
-    padding: 0;
-    direction: rtl;
-    text-align: center;
-}
-.container {
-    max-width: 800px;
-    margin: auto;
-    background: #fff;
-    margin-top: 30px;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-h2 { color: #1a73e8; margin-bottom: 20px; }
-button {
-    background:#1a73e8;
-    color:white;
-    border:none;
-    padding:10px 18px;
-    border-radius:8px;
-    margin:8px;
-    cursor:pointer;
-    font-size:16px;
-}
-.section { display:none; margin-top:20px; }
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-th, td {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-}
-th {
-    background: #1a73e8;
-    color: white;
-}
-.video-box {
-    width:100%;
-    height:auto;
-    background:#000;
-    border-radius:10px;
-    overflow:hidden;
-}
-.qr-container {
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:15px;
-    margin-top:20px;
-}
-.qr-item {
-    background:#fafafa;
-    padding:10px;
-    border-radius:10px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
-</style>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      font-family: "Tajawal", sans-serif;
+      background: #f3f6f4;
+      direction: rtl;
+    }
+    .moe-green {
+      color: #017c67;
+    }
+    .moe-btn {
+      background-color: #017c67;
+      color: white;
+    }
+    .moe-btn:hover {
+      background-color: #026f5d;
+    }
+    .moe-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #d9e3df;
+      padding: 20px;
+    }
+    .moe-tab-active {
+      background-color: #017c67 !important;
+      color: white !important;
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="container">
-    <h2>نظام إدارة حضور الطلاب</h2>
+  <div class="max-w-6xl mx-auto p-4 md:p-6">
 
-    <!-- أزرار التنقل -->
-    <button onclick="showSection('scan')">مسح QR</button>
-    <button onclick="showSection('generate')">إنشاء QR من Excel</button>
-    <button onclick="showSection('attendance')">سجل الحضور</button>
-    <button onclick="showSection('absent')">الطلاب الغائبون</button>
-	<button onclick="exportAllQRsPDF()">تحميل جميع الرموز PDF</button>
+    <div class="moe-card shadow-md">
 
-    <!-- قسم المسح -->
-    <div id="scan" class="section">
-        <h3>مسح رمز QR</h3>
-        <div class="video-box">
-            <video id="video" width="100%" autoplay muted playsinline></video>
+      <!-- HEADER -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
+        <div>
+          <h1 class="text-3xl font-bold moe-green">نظام حضور الطلاب</h1>
+          <p class="text-gray-500 mt-1 text-sm">متوافق مع وزارة التعليم – QR + Google Sheets + SMS</p>
         </div>
-        <button onclick="startCamera()">تشغيل الكاميرا</button>
-        <button onclick="stopCamera()" style="background:#d9534f;">إيقاف الكاميرا</button>
-        <p id="scanResult" style="color:#1a73e8; font-weight:bold;"></p>
+        <div class="text-sm text-gray-700">
+          <div><strong>التاريخ:</strong> <span id="todayLabel"></span></div>
+          <div id="smsBalance" class="mt-1 text-xs font-semibold text-green-700">جاري جلب رصيد الرسائل...</div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
+        <button class="tab-btn moe-tab-active py-2 rounded-lg font-semibold" data-target="section-dashboard">لوحة الإحصائيات</button>
+        <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-excel">إنشاء QR</button>
+        <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-scan">مسح QR</button>
+        <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-attendance">سجل الحضور</button>
+        <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-absent">الغياب</button>
+        <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-late">المتأخرون</button>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="section-dashboard" class="section">
+        <h2 class="text-xl font-bold moe-green mb-4">لوحة الإحصائيات</h2>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="moe-card text-center">
+            <p class="text-gray-600 text-sm mb-1">إجمالي الطلاب</p>
+            <p id="statTotalStudents" class="text-2xl font-bold moe-green">0</p>
+          </div>
+          <div class="moe-card text-center">
+            <p class="text-gray-600 text-sm mb-1">الحاضرون اليوم</p>
+            <p id="statPresentToday" class="text-2xl font-bold text-green-700">0</p>
+          </div>
+          <div class="moe-card text-center">
+            <p class="text-gray-600 text-sm mb-1">المتأخرون</p>
+            <p id="statLateToday" class="text-2xl font-bold text-orange-600">0</p>
+          </div>
+          <div class="moe-card text-center">
+            <p class="text-gray-600 text-sm mb-1">الغياب</p>
+            <p id="statAbsentToday" class="text-2xl font-bold text-red-600">0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR FROM EXCEL -->
+      <div id="section-excel" class="section hidden">
+        <h2 class="text-xl font-bold moe-green mb-3">إنشاء QR من ملف Excel</h2>
+
+        <div class="flex flex-col md:flex-row gap-4 items-center mb-3">
+          <input id="excelFile" type="file" accept=".xls,.xlsx" class="border rounded px-3 py-2 text-sm bg-gray-50" />
+          <button id="btnImportExcel" class="moe-btn px-4 py-2 rounded-lg text-sm font-semibold">استيراد الطلاب</button>
+        </div>
+
+        <div id="excelStatus" class="text-sm text-gray-600 mb-3"></div>
+        <div id="studentsContainer"></div>
+      </div>
+
+      <!-- QR SCANNER -->
+      <div id="section-scan" class="section hidden">
+        <h2 class="text-xl font-bold moe-green mb-4">مسح QR</h2>
+        <div id="reader" class="w-full max-w-md mx-auto border-2 border-green-700 rounded-xl"></div>
+        <p id="scanMessage" class="text-center mt-4 text-sm font-bold"></p>
+      </div>
+
+      <!-- ATTENDANCE -->
+      <div id="section-attendance" class="section hidden">
+        <h2 class="text-xl font-bold moe-green mb-4">سجل الحضور</h2>
+        <div class="moe-card overflow-x-auto">
+          <table class="min-w-full text-sm" id="attendanceTable">
+            <thead class="bg-green-700 text-white">
+              <tr>
+                <th class="px-3 py-2">ID</th>
+                <th class="px-3 py-2">الاسم</th>
+                <th class="px-3 py-2">الصف</th>
+                <th class="px-3 py-2">الفصل</th>
+                <th class="px-3 py-2">رقم ولي الأمر</th>
+                <th class="px-3 py-2">QR</th>
+                <th class="px-3 py-2">SMS</th>
+                <th class="px-3 py-2">الوقت</th>
+                <th class="px-3 py-2">التاريخ</th>
+                <th class="px-3 py-2">الحالة</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ABSENT -->
+      <div id="section-absent" class="section hidden">
+        <h2 class="text-xl font-bold moe-green mb-4">قائمة الغياب</h2>
+        <div class="moe-card overflow-x-auto">
+          <table class="min-w-full text-sm" id="absentTable">
+            <thead class="bg-red-600 text-white">
+              <tr>
+                <th class="px-3 py-2">ID</th>
+                <th class="px-3 py-2">الاسم</th>
+                <th class="px-3 py-2">الصف</th>
+                <th class="px-3 py-2">الفصل</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- LATE -->
+      <div id="section-late" class="section hidden">
+        <h2 class="text-xl font-bold text-orange-600 mb-4">المتأخرون اليوم</h2>
+        <div class="moe-card overflow-x-auto">
+          <table class="min-w-full text-sm" id="lateTable">
+            <thead class="bg-orange-500 text-white">
+              <tr>
+                <th class="px-3 py-2">ID</th>
+                <th class="px-3 py-2">الاسم</th>
+                <th class="px-3 py-2">الصف</th>
+                <th class="px-3 py-2">الفصل</th>
+                <th class="px-3 py-2">الوقت</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
+  </div>
 
-    <!-- قسم إنشاء QR -->
-    <div id="generate" class="section">
-        <h3>إنشاء رموز QR للطلاب</h3>
-        <input type="file" id="fileInput" accept=".xlsx,.xls">
-        <button onclick="generateQRs()">إنشاء QR</button>
+  <!-- SMS POPUP -->
+  <div id="smsModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+    <div class="bg-white w-80 p-5 rounded-2xl shadow-xl">
+      <h3 class="text-lg font-bold moe-green mb-3 text-center">إرسال رسالة نصية</h3>
+      <p class="text-sm text-gray-600 mb-2"><span id="smsTargetLabel"></span></p>
+      <textarea id="smsMessage" class="w-full border rounded-lg p-2 text-sm" rows="4" placeholder="اكتب الرسالة هنا..."></textarea>
 
-        <div id="qrContainer" class="qr-container"></div>
+      <div class="flex justify-between mt-4">
+        <button onclick="closeSMSModal()" class="bg-gray-300 px-4 py-2 rounded-lg text-sm font-semibold">إلغاء</button>
+        <button onclick="confirmSendSMS()" class="moe-btn px-4 py-2 rounded-lg text-sm font-semibold">إرسال</button>
+      </div>
     </div>
-
-    <!-- سجل الحضور -->
-    <div id="attendance" class="section">
-        <h3>سجل الحضور</h3>
-        <table id="attendanceTable">
-            <tr>
-                <th>الاسم</th>
-                <th>الرقم المدني</th>
-                <th>الصف</th>
-                <th>الفصل</th>
-                <th>الوقت</th>
-                <th>التاريخ</th>
-            </tr>
-        </table>
-        <button onclick="clearAttendance()" style="background:#d9534f;">مسح السجل</button>
-    </div>
-	<button onclick="exportAttendance()" 
-        style="background:#1a73e8;color:white;border:none;padding:10px 18px;border-radius:8px;margin-top:15px;cursor:pointer;font-size:16px;">
-    تصدير الحضور إلى Excel
-</button>
-
-    <!-- الغياب -->
-    <div id="absent" class="section">
-        <h3>الطلاب الغائبون</h3>
-        <table id="absentTable">
-            <tr>
-                <th>الاسم</th>
-                <th>الرقم المدني</th>
-                <th>الصف</th>
-                <th>الفصل</th>
-            </tr>
-        </table>
-    </div>
-
-</div>
-
-<!-- مكتبات -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<script src="https://unpkg.com/@zxing/library@latest"></script>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <script>
+
+/* =============================
+    إعدادات عامة
+============================= */
+
+// رابط Google Apps Script (نفس رابطك)
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbx4PKVybf33NP9-LVhSY1l1Mz1FoSCOY58v88YmzkJBmXdmgSvUoyTX-Q2XlVLWlavGEQ/exec";
+
+// إعدادات مزود SMS
+const SMS_API_URL = "https://app.mobile.net.sa/api/v1/send";
+const SMS_BALANCE_URL = "https://app.mobile.net.sa/api/v1/get-balance";
+const SMS_API_KEY = "XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr";
+const SMS_SENDER_NAME = "School1";
+
 let students = [];
-let stream;
+let attendance = [];
+let smsTarget = null;
+let scanner = null;
 
-// إظهار الأقسام
-function showSection(id){
-    document.querySelectorAll(".section").forEach(sec=>sec.style.display="none");
-    document.getElementById(id).style.display="block";
+document.getElementById("todayLabel").textContent =
+  new Date().toLocaleDateString("ar-SA");
 
-    if(id === "attendance") loadAttendance();
-    if(id === "absent") loadAbsent();
-}
+/* =============================
+    التبويبات
+============================= */
 
-// تشغيل الكاميرا
-async function startCamera(){
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment" }});
-        const video = document.getElementById("video");
-        video.srcObject = stream;
-        video.play();
-        scanQR();
-    } catch(err){
-        alert("تعذر الوصول للكاميرا");
-    }
-}
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".section").forEach((s) => s.classList.add("hidden"));
+    document
+      .getElementById(btn.dataset.target)
+      .classList.remove("hidden");
 
-// إيقاف الكاميرا
-function stopCamera(){
-    if(stream){
-        stream.getTracks().forEach(t=>t.stop());
-    }
-}
+    document.querySelectorAll(".tab-btn").forEach((b) =>
+      b.classList.remove("moe-tab-active")
+    );
+    btn.classList.add("moe-tab-active");
 
-// مسح QR
-function scanQR(){
-    const codeReader = new ZXing.BrowserQRCodeReader();
-    const videoElem = document.getElementById("video");
-
-    codeReader.decodeFromVideoDevice(null, "video", (result, err)=>{
-        if(result){
-            document.getElementById("scanResult").innerText = "تم المسح بنجاح";
-            processQR(result.text);
-        }
-    });
-}
-
-// معالجة بيانات QR
-function processQR(text){
-    let obj = {};
-    text.split(";").forEach(item=>{
-        let [key,val] = item.split("=");
-        obj[key.trim()] = val.trim();
-    });
-
-    const found = students.find(s=>s.ID == obj.ID);
-    if(!found){
-        alert("الطالب غير موجود");
-        return;
+    if (btn.dataset.target === "section-scan") {
+      setTimeout(() => startScanner(), 500);
     }
 
-    saveAttendance(found);
-    alert("تم تسجيل حضور: " + found.name);
-	stop.scanQR
-}
+    if (btn.dataset.target === "section-attendance") renderAttendance();
+    if (btn.dataset.target === "section-absent") renderAbsent();
+    if (btn.dataset.target === "section-late") renderLate();
+  });
+});
 
-// إنشاء QR
-function generateQRs(){
-    const fileInput = document.getElementById("fileInput");
-    if(fileInput.files.length === 0){
-        alert("اختر ملف Excel");
-        return;
-    }
+/* =============================
+    استيراد الطلاب من Excel
+============================= */
 
-    const file = fileInput.files[0];
-    const reader = new FileReader();
+document.getElementById("btnImportExcel").onclick = () => {
+  const file = document.getElementById("excelFile").files[0];
+  if (!file) return alert("اختر ملف Excel أولاً");
 
-    reader.onload = e=>{
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, {type:"array"});
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet);
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const wb = XLSX.read(e.target.result, { type: "array" });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet);
 
-        students = json;
-        localStorage.setItem("students", JSON.stringify(students));
-
-        const container = document.getElementById("qrContainer");
-        container.innerHTML = "";
-
-        students.forEach(s=>{
-            let qrData = `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class}`;
-            let div = document.createElement("div");
-            div.className = "qr-item";
-
-            let p = document.createElement("p");
-            p.innerText = s.name;
-            div.appendChild(p);
-
-            let canvas = document.createElement("canvas");
-            QRCode.toCanvas(canvas, qrData, { width:150 });
-            div.appendChild(canvas);
-
-            container.appendChild(div);
-        });
-
-        alert("تم إنشاء QR لجميع الطلاب");
-    };
-
-    reader.readAsArrayBuffer(file);
-}
-
-// حفظ الحضور
-function saveAttendance(st){
-    let attendance = JSON.parse(localStorage.getItem("attendance") || "[]");
-
-    attendance.push({
-        name: st.name,
-        ID: st.ID,
-        grade: st.grade,
-        class: st.class,
-        time: new Date().toLocaleTimeString(),
-        date: new Date().toLocaleDateString()
-    });
-
-    localStorage.setItem("attendance", JSON.stringify(attendance));
-}
-
-// تحميل سجل الحضور
-function loadAttendance(){
-    let table = document.getElementById("attendanceTable");
-    table.innerHTML = `
-        <tr>
-            <th>الاسم</th>
-            <th>الرقم المدني</th>
-            <th>الصف</th>
-            <th>الفصل</th>
-            <th>الوقت</th>
-            <th>التاريخ</th>
-        </tr>`;
-
-    let data = JSON.parse(localStorage.getItem("attendance") || "[]");
-
-    data.forEach(r=>{
-        table.innerHTML += `
-            <tr>
-                <td>${r.name}</td>
-                <td>${r.ID}</td>
-                <td>${r.grade}</td>
-                <td>${r.class}</td>
-                <td>${r.time}</td>
-                <td>${r.date}</td>
-            </tr>`;
-    });
-}
-
-// مسح السجل
-function clearAttendance(){
-    if(confirm("مسح السجل؟")){
-        localStorage.removeItem("attendance");
-        loadAttendance();
-    }
-}
-
-// الغياب
-function loadAbsent(){
-    let absentTable = document.getElementById("absentTable");
-
-    absentTable.innerHTML = `
-        <tr>
-            <th>الاسم</th>
-            <th>الرقم المدني</th>
-            <th>الصف</th>
-            <th>الفصل</th>
-        </tr>`;
-
-    let students = JSON.parse(localStorage.getItem("students") || "[]");
-    let attendance = JSON.parse(localStorage.getItem("attendance") || "[]");
-
-    let presentIDs = attendance.map(a=>a.ID);
-    let absent = students.filter(s=>!presentIDs.includes(String(s.ID)));
-
-    absent.forEach(s=>{
-        absentTable.innerHTML += `
-            <tr>
-                <td>${s.name}</td>
-                <td>${s.ID}</td>
-                <td>${s.grade}</td>
-                <td>${s.class}</td>
-            </tr>`;
-    });
-}
-
-
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-<script>
-function exportAttendance() {
-    let attendance = JSON.parse(localStorage.getItem("attendance") || "[]");
-
-    if (attendance.length === 0) {
-        alert("لا توجد بيانات لتصديرها");
-        return;
-    }
-
-    let sheetData = attendance.map(item => ({
-        ID: item.id,
-        Name: item.name,
-        Grade: item.grade,
-        Class: item.class,
-        Time: item.time,
-        Date: item.date
+    students = json.map((r) => ({
+      ID: String(r.ID || "").trim(),
+      name: r.Name || "",
+      grade: r.Grade || "",
+      class: r.Class || "",
+      parentMobile: String(r.ParentMobile || "").trim(),
     }));
 
-    let ws = XLSX.utils.json_to_sheet(sheetData);
-    let wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+    document.getElementById("excelStatus").textContent =
+      "تم استيراد " + students.length + " طالب.";
 
-    XLSX.writeFile(wb, "سجل_الحضور.xlsx");
+    renderStudents();
+
+    students.forEach((s) => saveStudentToSheet(s));
+
+    updateStats();
+  };
+
+  reader.readAsArrayBuffer(file);
+};
+
+/* حفظ طالب في Google Sheets */
+function saveStudentToSheet(s) {
+  const form = new URLSearchParams();
+  form.append("action", "addStudent");
+  form.append("ID", s.ID);
+  form.append("name", s.name);
+  form.append("grade", s.grade);
+  form.append("class", s.class);
+  form.append("parentMobile", s.parentMobile);
+  form.append("qr", "");
+
+  fetch(API_URL, { method: "POST", body: form });
 }
+
+/* =============================
+    عرض قائمة الطلاب + QR + SMS
+============================= */
+
+function renderStudents() {
+  let html = `
+  <table class="min-w-full text-sm">
+    <thead class="bg-green-700 text-white">
+      <tr>
+        <th class="px-3 py-2">ID</th>
+        <th class="px-3 py-2">الاسم</th>
+        <th class="px-3 py-2">الصف</th>
+        <th class="px-3 py-2">الفصل</th>
+        <th class="px-3 py-2">الجوال</th>
+        <th class="px-3 py-2">QR</th>
+        <th class="px-3 py-2">SMS</th>
+      </tr>
+    </thead>
+    <tbody>
+  `;
+
+  students.forEach((s) => {
+    const qrData =
+      `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARENT=${s.parentMobile}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+      qrData
+    )}`;
+
+    html += `
+      <tr class="border-b">
+        <td class="px-3 py-2">${s.ID}</td>
+        <td class="px-3 py-2">${s.name}</td>
+        <td class="px-3 py-2">${s.grade}</td>
+        <td class="px-3 py-2">${s.class}</td>
+        <td class="px-3 py-2">${s.parentMobile}</td>
+        <td class="px-3 py-2"><img src="${qrUrl}" class="w-16 mx-auto"/></td>
+        <td class="px-3 py-2">
+          <button onclick="openSMSModal('${s.ID}')" class="moe-btn px-3 py-1 rounded text-xs">SMS</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("studentsContainer").innerHTML = html;
+}
+
+/* =============================
+    نافذة SMS
+============================= */
+
+function openSMSModal(id) {
+  smsTarget = students.find((s) => s.ID == id);
+  document.getElementById("smsTargetLabel").textContent =
+    `إرسال رسالة لولي أمر الطالب ${smsTarget.name} (${smsTarget.parentMobile})`;
+  document.getElementById("smsModal").classList.remove("hidden");
+}
+
+function closeSMSModal() {
+  document.getElementById("smsModal").classList.add("hidden");
+}
+
+/* تنسيق رقم الجوال */
+function normalizeMobile(n) {
+  n = String(n).replace(/\D/g, "");
+  if (n.startsWith("966")) return n;
+  if (n.startsWith("05")) return "966" + n.slice(1);
+  if (n.startsWith("5")) return "966" + n;
+  return n;
+}
+
+async function confirmSendSMS() {
+  const msg = document.getElementById("smsMessage").value.trim();
+  if (!msg) return alert("اكتب نص الرسالة");
+
+  const mobile = normalizeMobile(smsTarget.parentMobile);
+  if (!mobile) return alert("رقم الجوال غير صالح");
+
+  const payload = {
+    number: mobile,
+    senderName: SMS_SENDER_NAME,
+    sendAtOption: "NOW",
+    messageBody: msg,
+  };
+
+  await fetch(SMS_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + SMS_API_KEY,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  alert("تم إرسال الرسالة");
+  closeSMSModal();
+}
+
+/* =============================
+    تشغيل ماسح QR
+============================= */
+
+function startScanner() {
+  if (scanner) return;
+
+  scanner = new Html5Qrcode("reader");
+
+  Html5Qrcode.getCameras().then((cams) => {
+    if (!cams.length) return alert("لا توجد كاميرا");
+
+    scanner.start(
+      cams[0].id,
+      { fps: 10, qrbox: 250 },
+      (qr) => handleQR(qr)
+    );
+  });
+}
+
+function handleQR(text) {
+  const parts = text.split(";");
+  let data = {};
+  parts.forEach((p) => {
+    const [k, v] = p.split("=");
+    data[k] = v;
+  });
+
+  recordAttendance(data);
+  document.getElementById("scanMessage").textContent =
+    "تم تسجيل حضور: " + data.NAME;
+}
+
+/* =============================
+    تسجيل حضور الطالب
+============================= */
+
+function recordAttendance(stu) {
+  const now = new Date();
+  const time = now.toLocaleTimeString("ar-SA");
+  const date = now.toLocaleDateString("ar-SA");
+
+  attendance.push({
+    ID: stu.ID,
+    name: stu.NAME,
+    grade: stu.GRADE,
+    class: stu.CLASS,
+    parent: stu.PARENT,
+    time,
+    date,
+    status: "حاضر",
+  });
+
+  // حفظ في Google Sheets
+  const form = new URLSearchParams();
+  form.append("action", "recordAttendance");
+  form.append("ID", stu.ID);
+  form.append("name", stu.NAME);
+  form.append("grade", stu.GRADE);
+  form.append("class", stu.CLASS);
+  form.append("ParentMobile", stu.PARENT);
+  form.append("time", time);
+  form.append("date", date);
+
+  fetch(API_URL, { method: "POST", body: form });
+
+  renderAttendance();
+  updateStats();
+}
+
+/* =============================
+    جدول الحضور
+============================= */
+
+function renderAttendance() {
+  const tbody = document.querySelector("#attendanceTable tbody");
+  tbody.innerHTML = "";
+
+  attendance.forEach((r) => {
+    tbody.innerHTML += `
+      <tr class="border-b">
+        <td class="px-3 py-2">${r.ID}</td>
+        <td class="px-3 py-2">${r.name}</td>
+        <td class="px-3 py-2">${r.grade}</td>
+        <td class="px-3 py-2">${r.class}</td>
+        <td class="px-3 py-2">${r.parent}</td>
+        <td class="px-3 py-2">QR</td>
+        <td class="px-3 py-2">
+          <button onclick="openSMSModal('${r.ID}')" class="moe-btn px-3 py-1 rounded text-xs">SMS</button>
+        </td>
+        <td class="px-3 py-2">${r.time}</td>
+        <td class="px-3 py-2">${r.date}</td>
+        <td class="px-3 py-2">${r.status}</td>
+      </tr>
+    `;
+  });
+}
+
+/* =============================
+    الغياب
+============================= */
+
+function renderAbsent() {
+  const today = new Date().toLocaleDateString("ar-SA");
+  const presentIDs = attendance
+    .filter((r) => r.date === today)
+    .map((r) => r.ID);
+
+  const tbody = document.querySelector("#absentTable tbody");
+  tbody.innerHTML = "";
+
+  students
+    .filter((s) => !presentIDs.includes(s.ID))
+    .forEach((s) => {
+      tbody.innerHTML += `
+      <tr class="border-b">
+        <td class="px-3 py-2">${s.ID}</td>
+        <td class="px-3 py-2">${s.name}</td>
+        <td class="px-3 py-2">${s.grade}</td>
+        <td class="px-3 py-2">${s.class}</td>
+      </tr>
+      `;
+    });
+}
+
+/* =============================
+    المتأخرون
+============================= */
+function renderLate() {
+  const today = new Date().toLocaleDateString("ar-SA");
+
+  const lateList = attendance.filter(
+    (r) => r.date === today && r.status === "متأخر"
+  );
+
+  const tbody = document.querySelector("#lateTable tbody");
+  tbody.innerHTML = "";
+
+  lateList.forEach((r) => {
+    tbody.innerHTML += `
+      <tr class="border-b">
+        <td class="px-3 py-2">${r.ID}</td>
+        <td class="px-3 py-2">${r.name}</td>
+        <td class="px-3 py-2">${r.grade}</td>
+        <td class="px-3 py-2">${r.class}</td>
+        <td class="px-3 py-2">${r.time}</td>
+      </tr>
+    `;
+  });
+}
+
+/* =============================
+    تحديث الإحصائيات
+============================= */
+
+function updateStats() {
+  const today = new Date().toLocaleDateString("ar-SA");
+
+  const present = attendance.filter((a) => a.date === today).length;
+  const late = attendance.filter((a) => a.date === today && a.status === "متأخر").length;
+
+  document.getElementById("statTotalStudents").textContent = students.length;
+  document.getElementById("statPresentToday").textContent = present;
+  document.getElementById("statLateToday").textContent = late;
+  document.getElementById("statAbsentToday").textContent =
+    students.length - present;
+}
+
+/* =============================
+    جلب رصيد الرسائل
+============================= */
+
+async function getBalance() {
+  const res = await fetch(SMS_BALANCE_URL, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + SMS_API_KEY },
+  });
+
+  let balance = "غير متاح";
+  try {
+    const data = await res.json();
+    balance = data.data.balance;
+  } catch {}
+
+  document.getElementById("smsBalance").textContent =
+    "رصيد الرسائل: " + balance;
+}
+
+getBalance();
+
 </script>
 
 </body>
 </html>
+
+
+<!-- END OF PART 1 -->
