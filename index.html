@@ -452,6 +452,31 @@ function startScanner() {
     });
   });
 }
+/* =============================
+    التعامل مع نتيجة QR
+============================= */
+function handleQR(text) {
+  document.getElementById("scanMessage").textContent = "تم المسح ✔";
+
+  const parts = text.split(";");
+  let data = {};
+
+  parts.forEach(p => {
+    const [k, v] = p.split("=");
+    data[k] = v;
+  });
+
+  // تسجيل الحضور
+  recordAttendance(data);
+
+  // إغلاق الكاميرا مؤقتاً
+  try { scanner.stop(); } catch(e){}
+
+  // إعادة تشغيل الكاميرا للطّالب التالي
+  setTimeout(() => {
+    startScanner();
+  }, 1500);
+}
 
 
 /* =============================
