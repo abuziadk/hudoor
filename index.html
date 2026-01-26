@@ -393,7 +393,12 @@ async function confirmSendSMS() {
 /* =============================
    تشغيل ماسح QR بالكاميرا الخلفية
 ============================= */
+/* =============================
+    تشغيل ماسح QR – نسخة مستقرة
+============================= */
+
 function startScanner() {
+  // إيقاف أي ماسح سابق لمنع الأخطاء
   if (scanner) {
     try { scanner.stop(); } catch {}
   }
@@ -401,7 +406,10 @@ function startScanner() {
   scanner = new Html5Qrcode("reader");
 
   Html5Qrcode.getCameras().then((cams) => {
-    if (!cams.length) return alert("لا توجد كاميرات");
+    if (!cams.length) {
+      alert("لا توجد كاميرات متاحة");
+      return;
+    }
 
     // اختيار الكاميرا الخلفية
     let backCam = cams.find(c =>
@@ -409,18 +417,54 @@ function startScanner() {
       c.label.toLowerCase().includes("rear")
     );
 
-    let camId = backCam ? backCam.id : cams[cams.length - 1].id;
+    let camId = backCam ? backCam.id : cams[0].id;
 
     scanner.start(
       camId,
       {
         fps: 10,
-        qrbox: { width: 320, height: 320 },   // مهم جداً للجوال
+        qrbox: { width: 300, height: 300 },
         aspectRatio: 1.0,
-        disableFlip: true                     // يحل مشكلة قراءة بعض الأكواد
+        disableFlip: true
       },
       (decodedText) => {
-        handleQR
+        scanner.stop(); // إيقاف الماسح بعد نجاح القراءة
+        handleQR(decodedText);
+      },
+      (errorMessage) => {
+        // تجاهل الأخطاء العادية أثناء البحث
+      }
+    ).catch((err) => {
+      console.error("Scanner start error:", err);
+    });
+  });
+}
+
+/* =============================
+    تحليل محتوى الـ QR
+============================= */
+function handleQR(text) {
+  console.log("Scanned QR:", text);
+
+  const parts = text.split(";");
+  let data = {};
+
+  parts.forEach((p) => {
+    const [k, v] = p.split("=");
+    data[k] = v;
+  });
+
+  if (!data.ID) {
+    document.getElementById("scanMessage").textContent =
+      "الرمز غير صحيح";
+    return;
+  }
+
+  document.getElementById("scanMessage").textContent =
+    "تم تسجيل الحضور: " + data.NAME;
+
+  recordAttendance(data);
+}
 
 /* =============================
     تسجيل حضور الطالب
