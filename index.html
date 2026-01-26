@@ -463,19 +463,22 @@ function handleQR(text) {
 
   parts.forEach(p => {
     const [k, v] = p.split("=");
-    data[k] = v;
+    data[k.trim()] = v ? v.trim() : "";
   });
 
-  // تسجيل الحضور
-  recordAttendance(data);
+  console.log("QR DATA:", data); // للتأكد أن البيانات صحيحة
 
-  // إغلاق الكاميرا مؤقتاً
+  recordAttendance({
+    ID: data.ID,
+    name: data.NAME,
+    grade: data.GRADE,
+    class: data.CLASS,
+    parent: data.PARENT
+  });
+
   try { scanner.stop(); } catch(e){}
 
-  // إعادة تشغيل الكاميرا للطّالب التالي
-  setTimeout(() => {
-    startScanner();
-  }, 1500);
+  setTimeout(() => startScanner(), 1200);
 }
 
 
@@ -484,37 +487,48 @@ function handleQR(text) {
 ============================= */
 
 function recordAttendance(stu) {
+
+  if (!stu.ID) {
+    alert("لم يتم قراءة بيانات QR بشكل صحيح");
+    return;
+  }
+
   const now = new Date();
   const time = now.toLocaleTimeString("ar-SA");
   const date = now.toLocaleDateString("ar-SA");
 
-  attendance.push({
+  const rec = {
     ID: stu.ID,
-    name: stu.NAME,
-    grade: stu.GRADE,
-    class: stu.CLASS,
-    parent: stu.PARENT,
+    name: stu.name,
+    grade: stu.grade,
+    class: stu.class,
+    parent: stu.parent,
     time,
     date,
-    status: "حاضر",
-  });
+    status: "حاضر"
+  };
 
-  // حفظ في Google Sheets
+  attendance.push(rec);
+
+  // حفظ داخل Google Sheets
   const form = new URLSearchParams();
   form.append("action", "recordAttendance");
-  form.append("ID", stu.ID);
-  form.append("name", stu.NAME);
-  form.append("grade", stu.GRADE);
-  form.append("class", stu.CLASS);
-  form.append("ParentMobile", stu.PARENT);
-  form.append("time", time);
-  form.append("date", date);
+  form.append("ID", rec.ID);
+  form.append("name", rec.name);
+  form.append("grade", rec.grade);
+  form.append("class", rec.class);
+  form.append("ParentMobile", rec.parent);
+  form.append("time", rec.time);
+  form.append("date", rec.date);
 
-  fetch(API_URL, { method: "POST", body: form });
+  fetch(API_URL, { method: "POST", body: form })
+    .then(() => console.log("Saved to Google Sheet"))
+    .catch(e => console.error("Sheet Error:", e));
 
   renderAttendance();
   updateStats();
 }
+
 
 /* =============================
     جدول الحضور
