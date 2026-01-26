@@ -390,33 +390,33 @@ async function confirmSendSMS() {
     تشغيل ماسح QR
 ============================= */
 
+/* =============================
+   تشغيل ماسح QR بالكاميرا الخلفية
+============================= */
 function startScanner() {
-  if (scanner) return;
+  if (scanner) {
+    try { scanner.stop(); } catch {}
+  }
 
   scanner = new Html5Qrcode("reader");
 
   Html5Qrcode.getCameras().then((cams) => {
-    if (!cams.length) return alert("لا توجد كاميرا");
+    if (!cams.length) return alert("لا توجد كاميرا متاحة");
+
+    // اختيار الكاميرا الخلفية تلقائياً
+    let backCam = cams.find(c => 
+      c.label.toLowerCase().includes("back") ||
+      c.label.toLowerCase().includes("rear")
+    );
+
+    let camId = backCam ? backCam.id : cams[cams.length - 1].id;
 
     scanner.start(
-      cams[0].id,
+      camId,
       { fps: 10, qrbox: 250 },
       (qr) => handleQR(qr)
     );
   });
-}
-
-function handleQR(text) {
-  const parts = text.split(";");
-  let data = {};
-  parts.forEach((p) => {
-    const [k, v] = p.split("=");
-    data[k] = v;
-  });
-
-  recordAttendance(data);
-  document.getElementById("scanMessage").textContent =
-    "تم تسجيل حضور: " + data.NAME;
 }
 
 /* =============================
