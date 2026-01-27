@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -38,6 +39,9 @@
 </head>
 
 <body>
+<audio id="beepSound" preload="auto">
+  <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
+</audio>
 
   <div class="max-w-6xl mx-auto p-4 md:p-6">
 
@@ -141,6 +145,11 @@
 
       <!-- ABSENT -->
       <div id="section-absent" class="section hidden">
+	  <button onclick="sendAbsentSMS()"
+  class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold mb-3">
+  إرسال رسالة لجميع الغائبين
+</button>
+
         <h2 class="text-xl font-bold moe-green mb-4">قائمة الغياب</h2>
         <div class="moe-card overflow-x-auto">
           <table class="min-w-full text-sm" id="absentTable">
@@ -159,6 +168,11 @@
 
       <!-- LATE -->
       <div id="section-late" class="section hidden">
+	  <button onclick="sendLateSMS()"
+  class="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold mb-3">
+  إرسال رسالة لجميع المتأخرين
+</button>
+
         <h2 class="text-xl font-bold text-orange-600 mb-4">المتأخرون اليوم</h2>
         <div class="moe-card overflow-x-auto">
           <table class="min-w-full text-sm" id="lateTable">
@@ -196,6 +210,8 @@
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <script>
+
+const beepSound = document.getElementById("beepSound");
 
 /* =============================
     إعدادات عامة
@@ -456,6 +472,7 @@ function startScanner() {
     التعامل مع نتيجة QR
 ============================= */
 function handleQR(text) {
+
   document.getElementById("scanMessage").textContent = "تم المسح ✔";
 
   const parts = text.split(";");
@@ -650,6 +667,80 @@ async function getBalance() {
 
 getBalance();
 
+</script>
+<script>
+async function sendAbsentSMS() {
+  const today = new Date().toLocaleDateString("ar-SA");
+  const presentIDs = attendance
+    .filter(r => r.date === today)
+    .map(r => r.ID);
+
+  const absents = students.filter(s => !presentIDs.includes(s.ID));
+  if (!absents.length) {
+    alert("لا يوجد طلاب غائبون اليوم");
+    return;
+  }
+
+  const msg = prompt("اكتب نص رسالة الغياب:");
+  if (!msg) return;
+
+  for (let s of absents) {
+    const mobile = normalizeMobile(s.parentMobile);
+    if (!mobile) continue;
+
+    await fetch(SMS_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + SMS_API_KEY,
+      },
+      body: JSON.stringify({
+        number: mobile,
+        senderName: SMS_SENDER_NAME,
+        sendAtOption: "NOW",
+        messageBody: msg,
+      }),
+    });
+  }
+
+  alert("✅ تم إرسال رسائل الغياب بنجاح");
+}
+
+async function sendLateSMS() {
+  const today = new Date().toLocaleDateString("ar-SA");
+  const lateList = attendance.filter(
+    r => r.date === today && r.status === "متأخر"
+  );
+
+  if (!lateList.length) {
+    alert("لا يوجد طلاب متأخرون اليوم");
+    return;
+  }
+
+  const msg = prompt("اكتب نص رسالة التأخر:");
+  if (!msg) return;
+
+  for (let r of lateList) {
+    const mobile = normalizeMobile(r.parent);
+    if (!mobile) continue;
+
+    await fetch(SMS_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + SMS_API_KEY,
+      },
+      body: JSON.stringify({
+        number: mobile,
+        senderName: SMS_SENDER_NAME,
+        sendAtOption: "NOW",
+        messageBody: msg,
+      }),
+    });
+  }
+
+  alert("✅ تم إرسال رسائل التأخر بنجاح");
+}
 </script>
 
 </body>
