@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ماسح QR</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  /* fullscreen camera */
+  #preview {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="preview"></div>
+
+<script>
+const html5QrCode = new Html5Qrcode("preview");
+
+function onScanSuccess(decodedText) {
+  alert("Scanned: " + decodedText);
+}
+
+function onScanFailure(err) {}
+
+async function startCam() {
+  try {
+    await html5QrCode.start(
+      { facingMode: { exact: "environment" } },
+      { fps: 10, qrbox: 300 },
+      onScanSuccess,
+      onScanFailure
+    );
+  } catch (e) {
+    console.warn("Fallback:", e);
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 300 },
+      onScanSuccess,
+      onScanFailure
+    );
+  }
+}
+
+startCam();
+</script>
+
+</body>
+</html>
