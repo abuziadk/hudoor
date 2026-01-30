@@ -219,7 +219,7 @@ const beepSound = document.getElementById("beepSound");
 
 // رابط Google Apps Script (نفس رابطك)
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbx4PKVybf33NP9-LVhSY1l1Mz1FoSCOY58v88YmzkJBmXdmgSvUoyTX-Q2XlVLWlavGEQ/exec";
+  "https://script.google.com/macros/s/AKfycbwn-sHSa1GF3bk8exFBzay54o2VWjOWdqPUv_SCMsXv3yIXGndMDGJpPXrGoaDT_k5G5w/exec";
 
 // إعدادات مزود SMS
 const SMS_API_URL = "https://app.mobile.net.sa/api/v1/send";
@@ -668,80 +668,8 @@ async function getBalance() {
 getBalance();
 
 </script>
-<script>
-async function sendAbsentSMS() {
-  const today = new Date().toLocaleDateString("ar-SA");
-  const presentIDs = attendance
-    .filter(r => r.date === today)
-    .map(r => r.ID);
-
-  const absents = students.filter(s => !presentIDs.includes(s.ID));
-  if (!absents.length) {
-    alert("لا يوجد طلاب غائبون اليوم");
-    return;
-  }
-
-  const msg = prompt("اكتب نص رسالة الغياب:");
-  if (!msg) return;
-
-  for (let s of absents) {
-    const mobile = normalizeMobile(s.parentMobile);
-    if (!mobile) continue;
-
-    await fetch(SMS_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + SMS_API_KEY,
-      },
-      body: JSON.stringify({
-        number: mobile,
-        senderName: SMS_SENDER_NAME,
-        sendAtOption: "NOW",
-        messageBody: msg,
-      }),
-    });
-  }
-
-  alert("✅ تم إرسال رسائل الغياب بنجاح");
-}
-
-async function sendLateSMS() {
-  const today = new Date().toLocaleDateString("ar-SA");
-  const lateList = attendance.filter(
-    r => r.date === today && r.status === "متأخر"
-  );
-
-  if (!lateList.length) {
-    alert("لا يوجد طلاب متأخرون اليوم");
-    return;
-  }
-
-  const msg = prompt("اكتب نص رسالة التأخر:");
-  if (!msg) return;
-
-  for (let r of lateList) {
-    const mobile = normalizeMobile(r.parent);
-    if (!mobile) continue;
-
-    await fetch(SMS_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + SMS_API_KEY,
-      },
-      body: JSON.stringify({
-        number: mobile,
-        senderName: SMS_SENDER_NAME,
-        sendAtOption: "NOW",
-        messageBody: msg,
-      }),
-    });
-  }
-
-  alert("✅ تم إرسال رسائل التأخر بنجاح");
-}
-</script>
 
 </body>
 </html>
+
+
