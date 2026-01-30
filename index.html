@@ -276,12 +276,14 @@ document.getElementById("btnImportExcel").onclick = () => {
     const json = XLSX.utils.sheet_to_json(sheet);
 
     students = json.map((r) => ({
-      ID: String(r.ID || "").trim(),
-      name: r.Name || "",
-      grade: r.Grade || "",
-      class: r.Class || "",
-      parentMobile: String(r.ParentMobile || "").trim(),
-    }));
+  ID: String(r.ID || "").trim(),
+  name: r.Name || "",
+  grade: r.Grade || "",
+  class: r.Class || "",
+  parentMobile: String(r.ParentMobile || "").trim(),
+  token: Math.random().toString(36).substring(2, 10) // TOKEN بسيط
+}));
+
 
     document.getElementById("excelStatus").textContent =
       "تم استيراد " + students.length + " طالب.";
@@ -305,10 +307,11 @@ function saveStudentToSheet(s) {
   form.append("grade", s.grade);
   form.append("class", s.class);
   form.append("parentMobile", s.parentMobile);
-  form.append("qr", "");
+  form.append("token", s.token);
 
   fetch(API_URL, { method: "POST", body: form });
 }
+
 
 /* =============================
     عرض قائمة الطلاب + QR + SMS
@@ -332,8 +335,9 @@ function renderStudents() {
   `;
 
   students.forEach((s) => {
-    const qrData =
-      `ID=${s.ID};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARENT=${s.parentMobile}`;
+const qrData =
+  `ID=${s.ID};TOKEN=${s.token};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARENT=${s.parentMobile}`;
+
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
       qrData
     )}`;
@@ -472,7 +476,6 @@ function startScanner() {
     التعامل مع نتيجة QR
 ============================= */
 function handleQR(text) {
-
   document.getElementById("scanMessage").textContent = "تم المسح ✔";
 
   const parts = text.split(";");
@@ -483,18 +486,18 @@ function handleQR(text) {
     data[k.trim()] = v ? v.trim() : "";
   });
 
-  console.log("QR DATA:", data); // للتأكد أن البيانات صحيحة
+  console.log("QR DATA:", data);
 
   recordAttendance({
     ID: data.ID,
     name: data.NAME,
     grade: data.GRADE,
     class: data.CLASS,
-    parent: data.PARENT
+    parentMobile: data.PARENT,
+    token: data.TOKEN
   });
 
   try { scanner.stop(); } catch(e){}
-
   setTimeout(() => startScanner(), 1200);
 }
 
@@ -504,42 +507,39 @@ function handleQR(text) {
 ============================= */
 
 function recordAttendance(stu) {
-
   if (!stu.ID) {
     alert("لم يتم قراءة بيانات QR بشكل صحيح");
     return;
   }
-
-  const now = new Date();
-  const time = now.toLocaleTimeString("ar-SA");
-  const date = now.toLocaleDateString("ar-SA");
 
   const rec = {
     ID: stu.ID,
     name: stu.name,
     grade: stu.grade,
     class: stu.class,
-    parent: stu.parent,
-    time,
-    date,
-    status: "حاضر"
+    parentMobile: stu.parentMobile,
+    status: "حاضر",
+    token: stu.token
   };
 
-  attendance.push(rec);
+  attendance.push({
+    ...rec,
+    time: new Date().toLocaleTimeString("ar-SA"),
+    date: new Date().toLocaleDateString("ar-SA")
+  });
 
-  // حفظ داخل Google Sheets
   const form = new URLSearchParams();
-  form.append("action", "recordAttendance");
+  form.append("action", "attendance");
   form.append("ID", rec.ID);
   form.append("name", rec.name);
   form.append("grade", rec.grade);
   form.append("class", rec.class);
-  form.append("ParentMobile", rec.parent);
-  form.append("time", rec.time);
-  form.append("date", rec.date);
+  form.append("parentMobile", rec.parentMobile);
+  form.append("token", rec.token);
 
   fetch(API_URL, { method: "POST", body: form })
-    .then(() => console.log("Saved to Google Sheet"))
+    .then(r => r.text())
+    .then(t => console.log("Server:", t))
     .catch(e => console.error("Sheet Error:", e));
 
   renderAttendance();
@@ -562,7 +562,7 @@ function renderAttendance() {
         <td class="px-3 py-2">${r.name}</td>
         <td class="px-3 py-2">${r.grade}</td>
         <td class="px-3 py-2">${r.class}</td>
-        <td class="px-3 py-2">${r.parent}</td>
+        <td class="px-3 py-2">${r.parentMobile}</td>
         <td class="px-3 py-2">QR</td>
         <td class="px-3 py-2">
           <button onclick="openSMSModal('${r.ID}')" class="moe-btn px-3 py-1 rounded text-xs">SMS</button>
