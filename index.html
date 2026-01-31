@@ -31,7 +31,8 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 </div>
 
 <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
-<button class="tab-btn moe-tab-active py-2 rounded-lg font-semibold" data-target="section-dashboard">لوحة الإحصائيات</button>
+<button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-admin">لوحة المدير</button>
+
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-excel">إنشاء QR</button>
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-scan">مسح QR</button>
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-attendance">سجل الحضور</button>
@@ -46,6 +47,7 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 <p class="text-gray-600 text-sm mb-1">إجمالي الطلاب</p>
 <p id="statTotalStudents" class="text-2xl font-bold moe-green">0</p>
 </div>
+
 <div class="moe-card text-center">
 <p class="text-gray-600 text-sm mb-1">الحاضرون اليوم</p>
 <p id="statPresentToday" class="text-2xl font-bold text-green-700">0</p>
@@ -59,6 +61,39 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 <p id="statAbsentToday" class="text-2xl font-bold text-red-600">0</p>
 </div>
 </div>
+</div>
+
+<div id="section-admin" class="section hidden">
+  <h2 class="text-xl font-bold moe-green mb-4">لوحة المدير</h2>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+
+    <div class="moe-card text-center">
+      <p class="text-gray-600 text-sm mb-1">إجمالي الطلاب</p>
+      <p id="adminTotalStudents" class="text-2xl font-bold moe-green">0</p>
+    </div>
+
+    <div class="moe-card text-center">
+      <p class="text-gray-600 text-sm mb-1">الحاضرون اليوم</p>
+      <p id="adminPresent" class="text-2xl font-bold text-green-700">0</p>
+    </div>
+
+    <div class="moe-card text-center">
+      <p class="text-gray-600 text-sm mb-1">المتأخرون</p>
+      <p id="adminLate" class="text-2xl font-bold text-orange-600">0</p>
+    </div>
+
+    <div class="moe-card text-center">
+      <p class="text-gray-600 text-sm mb-1">الغياب</p>
+      <p id="adminAbsent" class="text-2xl font-bold text-red-600">0</p>
+    </div>
+
+  </div>
+
+  <div class="moe-card text-center">
+    <p class="text-gray-600 text-sm mb-1">نسبة الحضور</p>
+    <p id="adminRate" class="text-3xl font-bold text-blue-700">0%</p>
+  </div>
 </div>
 
 <div id="section-excel" class="section hidden">
@@ -153,8 +188,23 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <script>
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbwn-sHSa1GF3bk8exFBzay54o2VWjOWdqPUv_SCMsXv3yIXGndMDGJpPXrGoaDT_k5G5w/exec";
+async function loadDashboard() {
+  try {
+    const res = await fetch(API_URL + "?action=getDashboard");
+    const data = await res.json();
+
+    document.getElementById("adminTotalStudents").textContent = data.totalStudents;
+    document.getElementById("adminPresent").textContent = data.present;
+    document.getElementById("adminLate").textContent = data.late;
+    document.getElementById("adminAbsent").textContent = data.absent;
+    document.getElementById("adminRate").textContent = data.attendanceRate + "%";
+
+  } catch (e) {
+    console.error("Dashboard Error:", e);
+  }
+}
+
+const API_URL = "https://script.google.com/macros/s/AKfycbyLnzfy9XSWyX5vB-WxnhIq4VrT4UCMYrvgUrhmWjLrBu1pnYwINQ0LLG4AdW2HmRSJpg/exec";
 const SMS_API_URL = "https://app.mobile.net.sa/api/v1/send";
 const SMS_BALANCE_URL = "https://app.mobile.net.sa/api/v1/get-balance";
 const SMS_API_KEY = "XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr";
@@ -178,6 +228,8 @@ if (btn.dataset.target === "section-scan") setTimeout(() => startScanner(), 500)
 if (btn.dataset.target === "section-attendance") renderAttendance();
 if (btn.dataset.target === "section-absent") renderAbsent();
 if (btn.dataset.target === "section-late") renderLate();
+if (btn.dataset.target === "section-admin") loadDashboard();
+
 });
 });
 document.getElementById("btnImportExcel").onclick = () => {
