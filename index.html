@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>نظام حضور الطلاب</title>
 <script src="https://cdn.tailwindcss.com"></script>
+
 <style>
 body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; }
 .moe-green { color: #017c67; }
@@ -19,20 +20,22 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 <div class="max-w-6xl mx-auto p-4 md:p-6">
 <div class="moe-card shadow-md">
 
+<!-- Header -->
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
 <div>
 <h1 class="text-3xl font-bold moe-green">نظام حضور الطلاب</h1>
 <p class="text-gray-500 mt-1 text-sm">متوافق مع وزارة التعليم – QR + Google Sheets + SMS</p>
 </div>
+
 <div class="text-sm text-gray-700">
 <div><strong>التاريخ:</strong> <span id="todayLabel"></span></div>
 <div id="smsBalance" class="mt-1 text-xs font-semibold text-green-700">جاري جلب رصيد الرسائل...</div>
 </div>
 </div>
 
+<!-- Tabs -->
 <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-admin">لوحة المدير</button>
-
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-excel">إنشاء QR</button>
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-scan">مسح QR</button>
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-attendance">سجل الحضور</button>
@@ -40,56 +43,59 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-late">المتأخرون</button>
 </div>
 
-
-
+<!-- لوحة المدير -->
 <div id="section-admin" class="section hidden">
-  <h2 class="text-xl font-bold moe-green mb-4">لوحة المدير</h2>
+<h2 class="text-xl font-bold moe-green mb-4">لوحة المدير</h2>
 
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-
-    <div class="moe-card text-center">
-      <p class="text-gray-600 text-sm mb-1">إجمالي الطلاب</p>
-      <p id="adminTotalStudents" class="text-2xl font-bold moe-green">0</p>
-    </div>
-
-    <div class="moe-card text-center">
-      <p class="text-gray-600 text-sm mb-1">الحاضرون اليوم</p>
-      <p id="adminPresent" class="text-2xl font-bold text-green-700">0</p>
-    </div>
-
-    <div class="moe-card text-center">
-      <p class="text-gray-600 text-sm mb-1">المتأخرون</p>
-      <p id="adminLate" class="text-2xl font-bold text-orange-600">0</p>
-    </div>
-
-    <div class="moe-card text-center">
-      <p class="text-gray-600 text-sm mb-1">الغياب</p>
-      <p id="adminAbsent" class="text-2xl font-bold text-red-600">0</p>
-    </div>
-
-  </div>
-
-  <div class="moe-card text-center">
-    <p class="text-gray-600 text-sm mb-1">نسبة الحضور</p>
-    <p id="adminRate" class="text-3xl font-bold text-blue-700">0%</p>
-  </div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div class="moe-card text-center">
+<p class="text-gray-600 text-sm mb-1">إجمالي الطلاب</p>
+<p id="adminTotalStudents" class="text-2xl font-bold moe-green">0</p>
 </div>
 
+<div class="moe-card text-center">
+<p class="text-gray-600 text-sm mb-1">الحاضرون اليوم</p>
+<p id="adminPresent" class="text-2xl font-bold text-green-700">0</p>
+</div>
+
+<div class="moe-card text-center">
+<p class="text-gray-600 text-sm mb-1">المتأخرون</p>
+<p id="adminLate" class="text-2xl font-bold text-orange-600">0</p>
+</div>
+
+<div class="moe-card text-center">
+<p class="text-gray-600 text-sm mb-1">الغياب</p>
+<p id="adminAbsent" class="text-2xl font-bold text-red-600">0</p>
+</div>
+</div>
+
+<div class="moe-card text-center">
+<p class="text-gray-600 text-sm mb-1">نسبة الحضور</p>
+<p id="adminRate" class="text-3xl font-bold text-blue-700">0%</p>
+</div>
+</div>
+
+<!-- إنشاء QR -->
 <div id="section-excel" class="section hidden">
 <h2 class="text-xl font-bold moe-green mb-3">إنشاء QR من ملف Excel</h2>
+
 <div class="flex flex-col md:flex-row gap-4 items-center mb-3">
 <input id="excelFile" type="file" accept=".xls,.xlsx" class="border rounded px-3 py-2 text-sm bg-gray-50" />
 <button id="btnImportExcel" class="moe-btn px-4 py-2 rounded-lg text-sm font-semibold">استيراد الطلاب</button>
 </div>
+
 <div id="excelStatus" class="text-sm text-gray-600 mb-3"></div>
 <div id="studentsContainer"></div>
 </div>
 
+<!-- مسح QR -->
 <div id="section-scan" class="section hidden">
 <h2 class="text-xl font-bold moe-green mb-4">مسح QR</h2>
 <div id="reader" class="w-full max-w-md mx-auto border-2 border-green-700 rounded-xl"></div>
 <p id="scanMessage" class="text-center mt-4 text-sm font-bold"></p>
 </div>
+
+<!-- سجل الحضور -->
 <div id="section-attendance" class="section hidden">
 <h2 class="text-xl font-bold moe-green mb-4">سجل الحضور</h2>
 <div class="moe-card overflow-x-auto">
@@ -113,6 +119,7 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 </div>
 </div>
 
+<!-- الغياب -->
 <div id="section-absent" class="section hidden">
 <h2 class="text-xl font-bold moe-green mb-4">قائمة الغياب</h2>
 <div class="moe-card overflow-x-auto">
@@ -130,6 +137,7 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 </div>
 </div>
 
+<!-- المتأخرون -->
 <div id="section-late" class="section hidden">
 <h2 class="text-xl font-bold text-orange-600 mb-4">المتأخرون اليوم</h2>
 <div class="moe-card overflow-x-auto">
@@ -151,11 +159,13 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 </div>
 </div>
 
+<!-- SMS Modal -->
 <div id="smsModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
 <div class="bg-white w-80 p-5 rounded-2xl shadow-xl">
 <h3 class="text-lg font-bold moe-green mb-3 text-center">إرسال رسالة نصية</h3>
 <p class="text-sm text-gray-600 mb-2"><span id="smsTargetLabel"></span></p>
 <textarea id="smsMessage" class="w-full border rounded-lg p-2 text-sm" rows="4"></textarea>
+
 <div class="flex justify-between mt-4">
 <button onclick="closeSMSModal()" class="bg-gray-300 px-4 py-2 rounded-lg text-sm font-semibold">إلغاء</button>
 <button onclick="confirmSendSMS()" class="moe-btn px-4 py-2 rounded-lg text-sm font-semibold">إرسال</button>
@@ -166,23 +176,9 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
+<!-- سكربت الجزء 3 سيتم وضعه هنا -->
+<script src="app.js"></script>
 <script>
-async function loadDashboard() {
-  try {
-    const res = await fetch(API_URL + "?action=getDashboard");
-    const data = await res.json();
-
-    document.getElementById("adminTotalStudents").textContent = data.totalStudents;
-    document.getElementById("adminPresent").textContent = data.present;
-    document.getElementById("adminLate").textContent = data.late;
-    document.getElementById("adminAbsent").textContent = data.absent;
-    document.getElementById("adminRate").textContent = data.attendanceRate + "%";
-
-  } catch (e) {
-    console.error("Dashboard Error:", e);
-  }
-}
-
 const API_URL = "https://script.google.com/macros/s/AKfycbyLnzfy9XSWyX5vB-WxnhIq4VrT4UCMYrvgUrhmWjLrBu1pnYwINQ0LLG4AdW2HmRSJpg/exec";
 const SMS_API_URL = "https://app.mobile.net.sa/api/v1/send";
 const SMS_BALANCE_URL = "https://app.mobile.net.sa/api/v1/get-balance";
@@ -196,66 +192,83 @@ let smsTarget = null;
 
 document.getElementById("todayLabel").textContent = new Date().toLocaleDateString("ar-SA");
 
+// Tabs
 document.querySelectorAll(".tab-btn").forEach((btn) => {
-btn.addEventListener("click", () => {
-document.querySelectorAll(".section").forEach((s) => s.classList.add("hidden"));
-document.getElementById(btn.dataset.target).classList.remove("hidden");
-document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("moe-tab-active"));
-btn.classList.add("moe-tab-active");
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".section").forEach((s) => s.classList.add("hidden"));
+    document.getElementById(btn.dataset.target).classList.remove("hidden");
+    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("moe-tab-active"));
+    btn.classList.add("moe-tab-active");
 
-if (btn.dataset.target === "section-scan") setTimeout(() => startScanner(), 500);
-if (btn.dataset.target === "section-attendance") renderAttendance();
-if (btn.dataset.target === "section-absent") renderAbsent();
-if (btn.dataset.target === "section-late") renderLate();
-if (btn.dataset.target === "section-admin") loadDashboard();
+    if (btn.dataset.target === "section-scan") setTimeout(() => startScanner(), 500);
+    if (btn.dataset.target === "section-attendance") renderAttendance();
+    if (btn.dataset.target === "section-absent") renderAbsent();
+    if (btn.dataset.target === "section-late") renderLate();
+    if (btn.dataset.target === "section-admin") loadDashboard();
+  });
+});
 
-});
-});
+// Dashboard
+async function loadDashboard() {
+  try {
+    const res = await fetch(API_URL + "?action=getDashboard");
+    const data = await res.json();
+    document.getElementById("adminTotalStudents").textContent = data.totalStudents;
+    document.getElementById("adminPresent").textContent = data.present;
+    document.getElementById("adminLate").textContent = data.late;
+    document.getElementById("adminAbsent").textContent = data.absent;
+    document.getElementById("adminRate").textContent = data.attendanceRate + "%";
+  } catch (e) {
+    console.error("Dashboard Error:", e);
+  }
+}
+
+// استيراد من Excel
 document.getElementById("btnImportExcel").onclick = () => {
-const file = document.getElementById("excelFile").files[0];
-if (!file) return alert("اختر ملف Excel أولاً");
+  const file = document.getElementById("excelFile").files[0];
+  if (!file) return alert("اختر ملف Excel أولاً");
 
-const reader = new FileReader();
-reader.onload = (e) => {
-const wb = XLSX.read(e.target.result, { type: "array" });
-const sheet = wb.Sheets[wb.SheetNames[0]];
-const json = XLSX.utils.sheet_to_json(sheet);
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const wb = XLSX.read(e.target.result, { type: "array" });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet);
 
-students = json.map((r) => ({
-ID: String(r.ID || "").trim(),
-name: r.Name || "",
-grade: r.Grade || "",
-class: r.Class || "",
-parentMobile: String(r.ParentMobile || "").trim(),
-token: Math.random().toString(36).substring(2, 10)
-}));
+    students = json.map((r) => ({
+      ID: String(r.ID || "").trim(),
+      name: r.Name || "",
+      grade: r.Grade || "",
+      class: r.Class || "",
+      parentMobile: String(r.ParentMobile || "").trim(),
+      token: Math.random().toString(36).substring(2, 10)
+    }));
 
-document.getElementById("excelStatus").textContent =
-"تم استيراد " + students.length + " طالب.";
+    document.getElementById("excelStatus").textContent =
+      "تم استيراد " + students.length + " طالب.";
 
-renderStudents();
-students.forEach((s) => saveStudentToSheet(s));
-updateStats();
-};
+    renderStudents();
+    students.forEach((s) => saveStudentToSheet(s));
+    updateStats();
+  };
 
-reader.readAsArrayBuffer(file);
+  reader.readAsArrayBuffer(file);
 };
 
 function saveStudentToSheet(s) {
-const form = new URLSearchParams();
-form.append("action", "addStudent");
-form.append("ID", s.ID);
-form.append("name", s.name);
-form.append("grade", s.grade);
-form.append("class", s.class);
-form.append("parentMobile", s.parentMobile);
-form.append("token", s.token);
-
-fetch(API_URL, { method: "POST", body: form });
+  const form = new URLSearchParams();
+  form.append("action", "addStudent");
+  form.append("ID", s.ID);
+  form.append("name", s.name);
+  form.append("grade", s.grade);
+  form.append("class", s.class);
+  form.append("parentMobile", s.parentMobile);
+  form.append("token", s.token);
+  fetch(API_URL, { method: "POST", body: form });
 }
 
+// إنشاء QR للطلاب (JSON)
 function renderStudents() {
-let html = `
+  let html = `
 <table class="min-w-full text-sm">
 <thead class="bg-green-700 text-white">
 <tr>
@@ -271,12 +284,21 @@ let html = `
 <tbody>
 `;
 
-students.forEach((s) => {
-const qrData =
-`ID=${s.ID};TOKEN=${s.token};NAME=${s.name};GRADE=${s.grade};CLASS=${s.class};PARENT=${s.parentMobile}`;
-const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+  students.forEach((s) => {
+    const qrData = JSON.stringify({
+      ID: s.ID,
+      TOKEN: s.token,
+      NAME: s.name,
+      GRADE: s.grade,
+      CLASS: s.class,
+      parentMobile: s.parentMobile
+    });
 
-html += `
+    const qrUrl =
+      "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
+      encodeURIComponent(qrData);
+
+    html += `
 <tr class="border-b">
 <td class="px-3 py-2">${s.ID}</td>
 <td class="px-3 py-2">${s.name}</td>
@@ -289,158 +311,174 @@ html += `
 </td>
 </tr>
 `;
-});
+  });
 
-html += "</tbody></table>";
-document.getElementById("studentsContainer").innerHTML = html;
+  html += "</tbody></table>";
+  document.getElementById("studentsContainer").innerHTML = html;
 }
 
+// SMS Modal
 function openSMSModal(id) {
-smsTarget = students.find((s) => s.ID == id);
-document.getElementById("smsTargetLabel").textContent =
-`إرسال رسالة لولي أمر الطالب ${smsTarget.name} (${smsTarget.parentMobile})`;
-document.getElementById("smsModal").classList.remove("hidden");
+  smsTarget = students.find((s) => s.ID == id) || attendance.find(a => a.ID == id);
+  if (!smsTarget) {
+    alert("لا يمكن العثور على بيانات الطالب");
+    return;
+  }
+  document.getElementById("smsTargetLabel").textContent =
+    `إرسال رسالة لولي أمر الطالب ${smsTarget.name} (${smsTarget.parentMobile})`;
+  document.getElementById("smsModal").classList.remove("hidden");
 }
 
 function closeSMSModal() {
-document.getElementById("smsModal").classList.add("hidden");
+  document.getElementById("smsModal").classList.add("hidden");
 }
 
 function normalizeMobile(n) {
-n = String(n).replace(/\D/g, "");
-if (n.startsWith("966")) return n;
-if (n.startsWith("05")) return "966" + n.slice(1);
-if (n.startsWith("5")) return "966" + n;
-return n;
+  n = String(n).replace(/\D/g, "");
+  if (n.startsWith("966")) return n;
+  if (n.startsWith("05")) return "966" + n.slice(1);
+  if (n.startsWith("5")) return "966" + n;
+  return n;
 }
 
 async function confirmSendSMS() {
-const msg = document.getElementById("smsMessage").value.trim();
-if (!msg) return alert("اكتب نص الرسالة");
+  const msg = document.getElementById("smsMessage").value.trim();
+  if (!msg) return alert("اكتب نص الرسالة");
 
-const mobile = normalizeMobile(smsTarget.parentMobile);
-if (!mobile) return alert("رقم الجوال غير صالح");
+  const mobile = normalizeMobile(smsTarget.parentMobile);
+  if (!mobile) return alert("رقم الجوال غير صالح");
 
-const payload = {
-number: mobile,
-senderName: SMS_SENDER_NAME,
-sendAtOption: "NOW",
-messageBody: msg,
-};
+  const payload = {
+    number: mobile,
+    senderName: SMS_SENDER_NAME,
+    sendAtOption: "NOW",
+    messageBody: msg,
+  };
 
-await fetch(SMS_API_URL, {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-Authorization: "Bearer " + SMS_API_KEY,
-},
-body: JSON.stringify(payload),
-});
+  await fetch(SMS_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + SMS_API_KEY,
+    },
+    body: JSON.stringify(payload),
+  });
 
-alert("تم إرسال الرسالة");
-closeSMSModal();
+  alert("تم إرسال الرسالة");
+  closeSMSModal();
 }
 
+// QR Scanner
 function startScanner() {
-if (scanner) { try { scanner.stop(); } catch(e){} }
+  if (scanner) { try { scanner.stop(); } catch(e){} }
 
-scanner = new Html5Qrcode("reader");
+  scanner = new Html5Qrcode("reader");
+  const config = {
+    fps: 10,
+    qrbox: { width: 280, height: 280 },
+    aspectRatio: 1.0,
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+  };
 
-const config = {
-fps: 10,
-qrbox: { width: 280, height: 280 },
-aspectRatio: 1.0,
-experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-};
+  const onScan = (decodedText) => {
+    try { scanner.stop(); } catch(e){}
+    handleQR(decodedText);
+  };
 
-scanner.start(
-{ facingMode: { exact: "environment" } },
-config,
-(decodedText) => {
-scanner.stop();
-handleQR(decodedText);
-},
-() => {}
-).catch(() => {
-Html5Qrcode.getCameras().then((cams) => {
-if (!cams.length) { alert("لا توجد كاميرات متاحة"); return; }
+  scanner.start(
+    { facingMode: { exact: "environment" } },
+    config,
+    onScan,
+    () => {}
+  ).catch(() => {
+    Html5Qrcode.getCameras().then((cams) => {
+      if (!cams.length) { alert("لا توجد كاميرات متاحة"); return; }
 
-let backCam = cams.find(c =>
-c.label.toLowerCase().includes("back") ||
-c.label.toLowerCase().includes("rear")
-);
+      let backCam = cams.find(c =>
+        c.label.toLowerCase().includes("back") ||
+        c.label.toLowerCase().includes("rear")
+      );
 
-let camId = backCam ? backCam.id : cams[0].id;
+      let camId = backCam ? backCam.id : cams[0].id;
 
-scanner.start(
-camId,
-config,
-(decodedText) => {
-scanner.stop();
-handleQR(decodedText);
-},
-() => {}
-);
-});
-});
+      scanner.start(
+        camId,
+        config,
+        onScan,
+        () => {}
+      );
+    });
+  });
 }
+
+// قراءة QR بصيغة JSON
 function handleQR(text) {
-document.getElementById("scanMessage").textContent = "تم المسح ✔";
+  document.getElementById("scanMessage").textContent = "تم المسح ✔";
 
-const parts = text.split(";");
-let data = {};
-parts.forEach(p => {
-const [k, v] = p.split("=");
-data[k.trim()] = v ? v.trim() : "";
-});
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    document.getElementById("scanMessage").textContent = "QR غير صالح أو غير مكتمل";
+    return;
+  }
 
-recordAttendance({
-ID: data.ID,
-name: data.NAME,
-grade: data.GRADE,
-class: data.CLASS,
-parentMobile: data.PARENT,
-token: data.TOKEN
-});
+  if (!data.ID || !data.TOKEN) {
+    document.getElementById("scanMessage").textContent =
+      "QR ناقص – لا يمكن تسجيل الحضور";
+    return;
+  }
 
-try { scanner.stop(); } catch(e){}
-setTimeout(() => startScanner(), 1200);
+  recordAttendance({
+    ID: data.ID,
+    name: data.NAME || data.name || "",
+    grade: data.GRADE || data.grade || "",
+    class: data.CLASS || data.class || "",
+    parentMobile: data.parentMobile || data.PARENT || "",
+    token: data.TOKEN || data.token
+  });
+
+  try { scanner.stop(); } catch(e){}
+  setTimeout(() => startScanner(), 1200);
 }
 
+// إرسال الحضور إلى Apps Script
 function recordAttendance(stu) {
-if (!stu.ID) { alert("QR غير صالح"); return; }
+  if (!stu.ID) { alert("QR غير صالح"); return; }
 
-const form = new URLSearchParams();
-form.append("action", "attendance");
-form.append("ID", stu.ID);
-form.append("name", stu.name);
-form.append("grade", stu.grade);
-form.append("class", stu.class);
-form.append("parentMobile", stu.parentMobile);
-form.append("token", stu.token);
+  const form = new URLSearchParams();
+  form.append("action", "attendance");
+  form.append("ID", stu.ID);
+  form.append("name", stu.name);
+  form.append("grade", stu.grade);
+  form.append("class", stu.class);
+  form.append("parentMobile", stu.parentMobile);
+  form.append("token", stu.token);
 
-fetch(API_URL, { method: "POST", body: form })
-.then(r => r.text())
-.then(msg => {
-document.getElementById("scanMessage").textContent = msg;
-loadAttendanceFromSheet();
-})
-.catch(e => console.error(e));
+  fetch(API_URL, { method: "POST", body: form })
+    .then(r => r.text())
+    .then(msg => {
+      document.getElementById("scanMessage").textContent = msg;
+      loadAttendanceFromSheet();
+    })
+    .catch(e => console.error(e));
 }
 
+// تحميل سجل الحضور
 async function loadAttendanceFromSheet() {
-const res = await fetch(API_URL + "?action=getAttendance");
-const data = await res.json();
-attendance = data;
-updateStats();
+  const res = await fetch(API_URL + "?action=getAttendance");
+  const data = await res.json();
+  attendance = data;
+  updateStats();
 }
 
+// عرض سجل الحضور
 function renderAttendance() {
-const tbody = document.querySelector("#attendanceTable tbody");
-tbody.innerHTML = "";
+  const tbody = document.querySelector("#attendanceTable tbody");
+  tbody.innerHTML = "";
 
-attendance.forEach((r) => {
-tbody.innerHTML += `
+  attendance.forEach((r) => {
+    tbody.innerHTML += `
 <tr class="border-b">
 <td class="px-3 py-2">${r.ID}</td>
 <td class="px-3 py-2">${r.name}</td>
@@ -456,18 +494,19 @@ tbody.innerHTML += `
 <td class="px-3 py-2">${r.status}</td>
 </tr>
 `;
-});
+  });
 }
 
+// الغياب
 function renderAbsent() {
-const today = new Date().toLocaleDateString("ar-SA");
-const presentIDs = attendance.filter(r => r.date === today).map(r => r.ID);
+  const today = new Date().toLocaleDateString("ar-SA");
+  const presentIDs = attendance.filter(r => r.date === today).map(r => r.ID);
 
-const tbody = document.querySelector("#absentTable tbody");
-tbody.innerHTML = "";
+  const tbody = document.querySelector("#absentTable tbody");
+  tbody.innerHTML = "";
 
-students.filter(s => !presentIDs.includes(s.ID)).forEach((s) => {
-tbody.innerHTML += `
+  students.filter(s => !presentIDs.includes(s.ID)).forEach((s) => {
+    tbody.innerHTML += `
 <tr class="border-b">
 <td class="px-3 py-2">${s.ID}</td>
 <td class="px-3 py-2">${s.name}</td>
@@ -475,18 +514,19 @@ tbody.innerHTML += `
 <td class="px-3 py-2">${s.class}</td>
 </tr>
 `;
-});
+  });
 }
 
+// المتأخرون
 function renderLate() {
-const today = new Date().toLocaleDateString("ar-SA");
-const lateList = attendance.filter(r => r.date === today && r.status === "متأخر");
+  const today = new Date().toLocaleDateString("ar-SA");
+  const lateList = attendance.filter(r => r.date === today && r.status === "متأخر");
 
-const tbody = document.querySelector("#lateTable tbody");
-tbody.innerHTML = "";
+  const tbody = document.querySelector("#lateTable tbody");
+  tbody.innerHTML = "";
 
-lateList.forEach((r) => {
-tbody.innerHTML += `
+  lateList.forEach((r) => {
+    tbody.innerHTML += `
 <tr class="border-b">
 <td class="px-3 py-2">${r.ID}</td>
 <td class="px-3 py-2">${r.name}</td>
@@ -495,34 +535,39 @@ tbody.innerHTML += `
 <td class="px-3 py-2">${r.time}</td>
 </tr>
 `;
-});
+  });
 }
 
+// إحصائيات بسيطة (إن وُجدت العناصر)
 function updateStats() {
-const today = new Date().toLocaleDateString("ar-SA");
-const present = attendance.filter(a => a.date === today).length;
-const late = attendance.filter(a => a.date === today && a.status === "متأخر").length;
+  const today = new Date().toLocaleDateString("ar-SA");
+  const present = attendance.filter(a => a.date === today).length;
+  const late = attendance.filter(a => a.date === today && a.status === "متأخر").length;
 
-document.getElementById("statTotalStudents").textContent = students.length;
-document.getElementById("statPresentToday").textContent = present;
-document.getElementById("statLateToday").textContent = late;
-document.getElementById("statAbsentToday").textContent = students.length - present;
+  const t = document.getElementById("statTotalStudents");
+  if (!t) return; // لو ما فيه كروت إحصائيات، تجاهل
+
+  document.getElementById("statTotalStudents").textContent = students.length;
+  document.getElementById("statPresentToday").textContent = present;
+  document.getElementById("statLateToday").textContent = late;
+  document.getElementById("statAbsentToday").textContent = students.length - present;
 }
 
+// رصيد الرسائل
 async function getBalance() {
-const res = await fetch(SMS_BALANCE_URL, {
-method: "POST",
-headers: { Authorization: "Bearer " + SMS_API_KEY },
-});
+  const res = await fetch(SMS_BALANCE_URL, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + SMS_API_KEY },
+  });
 
-let balance = "غير متاح";
-try {
-const data = await res.json();
-balance = data.data.balance;
-} catch {}
+  let balance = "غير متاح";
+  try {
+    const data = await res.json();
+    balance = data.data.balance;
+  } catch {}
 
-document.getElementById("smsBalance").textContent =
-"رصيد الرسائل: " + balance;
+  document.getElementById("smsBalance").textContent =
+    "رصيد الرسائل: " + balance;
 }
 
 getBalance();
@@ -531,4 +576,3 @@ loadAttendanceFromSheet();
 
 </body>
 </html>
-
