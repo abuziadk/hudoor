@@ -505,32 +505,37 @@ function renderAttendance() {
   const tbody = document.querySelector("#attendanceTable tbody");
   tbody.innerHTML = "";
 
-  attendance.forEach((r) => {
+  const presentList = attendance.filter(r => r.status === "حاضر");
+
+  presentList.forEach((r) => {
     tbody.innerHTML += `
-    <tr class="border-b">
-      <td class="px-3 py-2">${r.ID}</td>
-      <td class="px-3 py-2">${r.name}</td>
-      <td class="px-3 py-2">${r.grade}</td>
-      <td class="px-3 py-2">${r.class}</td>
-      <td class="px-3 py-2">${r.parentMobile}</td>
-      <td class="px-3 py-2">QR</td>
-      <td class="px-3 py-2">
-        <button onclick="openSMSModal('${r.ID}', 'attendance')" class="moe-btn px-3 py-1 rounded text-xs">SMS</button>
-      </td>
-      <td class="px-3 py-2">${r.time}</td>
-      <td class="px-3 py-2">${r.date}</td>
-      <td class="px-3 py-2">${r.status}</td>
-    </tr>
-    `;
+<tr class="border-b">
+<td class="px-3 py-2">${r.ID}</td>
+<td class="px-3 py-2">${r.name}</td>
+<td class="px-3 py-2">${r.grade}</td>
+<td class="px-3 py-2">${r.class}</td>
+<td class="px-3 py-2">${r.parentMobile}</td>
+<td class="px-3 py-2">QR</td>
+<td class="px-3 py-2">
+<button onclick="openSMSModal('${r.ID}')" class="moe-btn px-3 py-1 rounded text-xs">SMS</button>
+</td>
+<td class="px-3 py-2">${r.time}</td>
+<td class="px-3 py-2">${r.date}</td>
+<td class="px-3 py-2">${r.status}</td>
+</tr>
+`;
   });
 }
+
 
 // ===============================
 // عرض الغياب
 // ===============================
-async function renderAbsent() {
-  const res = await fetch(API_URL + "?action=getAbsent");
-  const absentList = await res.json();
+function renderAbsent() {
+  const today = new Date().toLocaleDateString("ar-SA");
+  const absentList = attendance.filter(
+    r => r.date === today && r.status === "غائب"
+  );
 
   const tbody = document.querySelector("#absentTable tbody");
   tbody.innerHTML = "";
@@ -551,9 +556,11 @@ async function renderAbsent() {
 // ===============================
 // عرض المتأخرين
 // ===============================
-async function renderLate() {
-  const res = await fetch(API_URL + "?action=getLate");
-  const lateList = await res.json();
+function renderLate() {
+  const today = new Date().toLocaleDateString("ar-SA");
+  const lateList = attendance.filter(
+    r => r.date === today && r.status === "متأخر"
+  );
 
   const tbody = document.querySelector("#lateTable tbody");
   tbody.innerHTML = "";
@@ -570,6 +577,7 @@ async function renderLate() {
 `;
   });
 }
+
 
 
 // ===============================
