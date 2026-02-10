@@ -495,6 +495,7 @@ function renderAttendance() {
 
 
 
+
 // الغياب
 function renderAbsent() {
   const tbody = document.querySelector("#absentTable tbody");
@@ -502,16 +503,17 @@ function renderAbsent() {
 
   const absent = attendance.filter(r => r.status === "غائب");
 
-  absent.forEach((r) => {
+  absent.forEach((s) => {
     tbody.innerHTML += `
 <tr>
-<td>${r.ID}</td>
-<td>${r.name}</td>
-<td>${r.grade}</td>
-<td>${r.class}</td>
+<td>${s.ID}</td>
+<td>${s.name}</td>
+<td>${s.grade}</td>
+<td>${s.class}</td>
 </tr>`;
   });
 }
+
 
 
 // المتأخرون
