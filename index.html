@@ -253,6 +253,15 @@ document.getElementById("btnImportExcel").onclick = () => {
 
   reader.readAsArrayBuffer(file);
 };
+function uniqueByID(list) {
+  const seen = new Set();
+  return list.filter(item => {
+    if (seen.has(item.ID)) return false;
+    seen.add(item.ID);
+    return true;
+  });
+}
+
 
 function saveStudentToSheet(s) {
   const form = new URLSearchParams();
@@ -477,21 +486,26 @@ function renderAttendance() {
   const tbody = document.querySelector("#attendanceTable tbody");
   tbody.innerHTML = "";
 
-  const present = attendance.filter(r => r.status === "حاضر");
+  let present = attendance.filter(r => r.status.trim() === "حاضر");
+
+  // إزالة التكرار
+  present = uniqueByID(present);
 
   present.forEach((r) => {
     tbody.innerHTML += `
-<tr>
-<td>${r.ID}</td>
-<td>${r.name}</td>
-<td>${r.grade}</td>
-<td>${r.class}</td>
-<td>${r.parentMobile}</td>
-<td>${r.time}</td>
-<td>${r.date}</td>
+<tr class="border-b">
+  <td>${r.ID}</td>
+  <td>${r.name}</td>
+  <td>${r.grade}</td>
+  <td>${r.class}</td>
+  <td>${r.parentMobile}</td>
+  <td>${r.time}</td>
+  <td>${r.date}</td>
+  <td>${r.status}</td>
 </tr>`;
   });
 }
+
 
 
 
@@ -501,36 +515,43 @@ function renderAbsent() {
   const tbody = document.querySelector("#absentTable tbody");
   tbody.innerHTML = "";
 
-  const absent = attendance.filter(r => r.status === "غائب");
+  let absent = attendance.filter(r => r.status.trim() === "غائب");
+
+  // إزالة التكرار
+  absent = uniqueByID(absent);
 
   absent.forEach((s) => {
     tbody.innerHTML += `
-<tr>
-<td>${s.ID}</td>
-<td>${s.name}</td>
-<td>${s.grade}</td>
-<td>${s.class}</td>
+<tr class="border-b">
+  <td>${s.name}</td>
+  <td>${s.ID}</td>
+  <td>${s.grade}</td>
+  <td>${s.class}</td>
 </tr>`;
   });
 }
 
 
 
-// المتأخرون
+
+
 function renderLate() {
   const tbody = document.querySelector("#lateTable tbody");
   tbody.innerHTML = "";
 
-  const late = attendance.filter(r => r.status === "متأخر");
+  let late = attendance.filter(r => r.status.trim() === "متأخر");
+
+  // إزالة التكرار
+  late = uniqueByID(late);
 
   late.forEach((r) => {
     tbody.innerHTML += `
-<tr>
-<td>${r.ID}</td>
-<td>${r.name}</td>
-<td>${r.grade}</td>
-<td>${r.class}</td>
-<td>${r.time}</td>
+<tr class="border-b">
+  <td>${r.ID}</td>
+  <td>${r.name}</td>
+  <td>${r.grade}</td>
+  <td>${r.class}</td>
+  <td>${r.time}</td>
 </tr>`;
   });
 }
