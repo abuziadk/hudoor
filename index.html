@@ -477,66 +477,61 @@ function renderAttendance() {
   const tbody = document.querySelector("#attendanceTable tbody");
   tbody.innerHTML = "";
 
-  attendance.forEach((r) => {
+  const present = attendance.filter(r => r.status === "حاضر");
+
+  present.forEach((r) => {
     tbody.innerHTML += `
-<tr class="border-b">
-<td class="px-3 py-2">${r.ID}</td>
-<td class="px-3 py-2">${r.name}</td>
-<td class="px-3 py-2">${r.grade}</td>
-<td class="px-3 py-2">${r.class}</td>
-<td class="px-3 py-2">${r.parentMobile}</td>
-<td class="px-3 py-2">QR</td>
-<td class="px-3 py-2">
-<button onclick="openSMSModal('${r.ID}')" class="moe-btn px-3 py-1 rounded text-xs">SMS</button>
-</td>
-<td class="px-3 py-2">${r.time}</td>
-<td class="px-3 py-2">${r.date}</td>
-<td class="px-3 py-2">${r.status}</td>
-</tr>
-`;
+<tr>
+<td>${r.ID}</td>
+<td>${r.name}</td>
+<td>${r.grade}</td>
+<td>${r.class}</td>
+<td>${r.parentMobile}</td>
+<td>${r.time}</td>
+<td>${r.date}</td>
+</tr>`;
   });
 }
+
 
 // الغياب
 function renderAbsent() {
-  const today = new Date().toLocaleDateString("ar-SA");
-  const presentIDs = attendance.filter(r => r.date === today).map(r => r.ID);
-
   const tbody = document.querySelector("#absentTable tbody");
   tbody.innerHTML = "";
 
-  students.filter(s => !presentIDs.includes(s.ID)).forEach((s) => {
+  const absent = attendance.filter(r => r.status === "غائب");
+
+  absent.forEach((r) => {
     tbody.innerHTML += `
-<tr class="border-b">
-<td class="px-3 py-2">${s.ID}</td>
-<td class="px-3 py-2">${s.name}</td>
-<td class="px-3 py-2">${s.grade}</td>
-<td class="px-3 py-2">${s.class}</td>
-</tr>
-`;
+<tr>
+<td>${r.ID}</td>
+<td>${r.name}</td>
+<td>${r.grade}</td>
+<td>${r.class}</td>
+</tr>`;
   });
 }
+
 
 // المتأخرون
 function renderLate() {
-  const today = new Date().toLocaleDateString("ar-SA");
-  const lateList = attendance.filter(r => r.date === today && r.status === "متأخر");
-
   const tbody = document.querySelector("#lateTable tbody");
   tbody.innerHTML = "";
 
-  lateList.forEach((r) => {
+  const late = attendance.filter(r => r.status === "متأخر");
+
+  late.forEach((r) => {
     tbody.innerHTML += `
-<tr class="border-b">
-<td class="px-3 py-2">${r.ID}</td>
-<td class="px-3 py-2">${r.name}</td>
-<td class="px-3 py-2">${r.grade}</td>
-<td class="px-3 py-2">${r.class}</td>
-<td class="px-3 py-2">${r.time}</td>
-</tr>
-`;
+<tr>
+<td>${r.ID}</td>
+<td>${r.name}</td>
+<td>${r.grade}</td>
+<td>${r.class}</td>
+<td>${r.time}</td>
+</tr>`;
   });
 }
+
 
 // إحصائيات بسيطة (إن وُجدت العناصر)
 function updateStats() {
