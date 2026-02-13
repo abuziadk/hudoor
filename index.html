@@ -7,6 +7,20 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
+.btn-export {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background-color: #2563eb;
+    color: white;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+.btn-export:hover {
+    background-color: #1e40af;
+}
+
 body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; }
 .moe-green { color: #017c67; }
 .moe-btn { background-color: #017c67; color: white; }
@@ -107,8 +121,6 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 <th class="px-3 py-2">الصف</th>
 <th class="px-3 py-2">الفصل</th>
 <th class="px-3 py-2">رقم ولي الأمر</th>
-<th class="px-3 py-2">QR</th>
-<th class="px-3 py-2">SMS</th>
 <th class="px-3 py-2">الوقت</th>
 <th class="px-3 py-2">التاريخ</th>
 <th class="px-3 py-2">الحالة</th>
@@ -121,11 +133,14 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 
 <!-- الغياب -->
 <div id="section-absent" class="section hidden">
-<h2 class="text-xl font-bold moe-green mb-4">قائمة الغياب</h2>
+<h2 class="text-xl font-bold moe-green mb-4">> قائمة الغياب</h2>
 <div class="moe-card overflow-x-auto">
 <table class="min-w-full text-sm" id="absentTable">
 <thead class="bg-red-600 text-white">
 <tr>
+
+<button onclick="exportAbsence()" class="btn-export">تصدير الغياب</button>
+</div>
 <th class="px-3 py-2">ID</th>
 <th class="px-3 py-2">الاسم</th>
 <th class="px-3 py-2">الصف</th>
@@ -144,6 +159,9 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 <table class="min-w-full text-sm" id="lateTable">
 <thead class="bg-orange-500 text-white">
 <tr>
+
+    <button onclick="exportLate()" class="btn-export">تصدير المتأخرين</button>
+</div>
 <th class="px-3 py-2">ID</th>
 <th class="px-3 py-2">الاسم</th>
 <th class="px-3 py-2">الصف</th>
@@ -178,8 +196,29 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 
 <!-- سكربت الجزء 3 سيتم وضعه هنا -->
 <script src="app.js"></script>
+
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyLnzfy9XSWyX5vB-WxnhIq4VrT4UCMYrvgUrhmWjLrBu1pnYwINQ0LLG4AdW2HmRSJpg/exec";
+function formatTime(isoString) {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  return date.toLocaleTimeString("ar-SA", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+
+function formatDate(isoString) {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  return date.toLocaleDateString("ar-SA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+}
+
+const API_URL = "https://script.google.com/macros/s/AKfycbxz7aDcqlDV497k5VQL4bL3nPXmoYQM-BT4EmpClm9OwcbsIhfWISfTH2angU2aLkR8CQ/exec";
 const SMS_API_URL = "https://app.mobile.net.sa/api/v1/send";
 const SMS_BALANCE_URL = "https://app.mobile.net.sa/api/v1/get-balance";
 const SMS_API_KEY = "XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr";
@@ -274,6 +313,50 @@ function saveStudentToSheet(s) {
   form.append("token", s.token);
   fetch(API_URL, { method: "POST", body: form });
 }
+function exportTableToExcel(tableId, fileName) {
+    const table = document.getElementById(tableId);
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.table_to_sheet(table);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    XLSX.writeFile(workbook, fileName + ".xlsx");
+}
+
+// تصدير الغياب
+function exportAbsence() {
+    const table = document.getElementById("absentTable");
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+    // العناوين بالترتيب الصحيح
+    const data = [
+        ["ID", "الاسم", "الصف", "الفصل"]
+    ];
+
+    rows.forEach(tr => {
+        const tds = tr.querySelectorAll("td");
+        if (tds.length >= 4) {
+            // هنا نرتب يدويًا: ID ثم الاسم ثم الصف ثم الفصل
+            const name = tds[0].innerText.trim();
+            const id   = tds[1].innerText.trim();
+            const grade = tds[2].innerText.trim();
+            const cls   = tds[3].innerText.trim();
+
+            data.push([id, name, grade, cls]);
+        }
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "الغياب");
+    XLSX.writeFile(wb, "تقرير_الغياب.xlsx");
+}
+
+
+// تصدير المتأخرين
+function exportLate() {
+    exportTableToExcel("lateTable", "تقرير_المتأخرين");
+}
+
+
 
 // إنشاء QR للطلاب (JSON)
 function renderStudents() {
@@ -481,32 +564,28 @@ async function loadAttendanceFromSheet() {
   updateStats();
 }
 
-// عرض سجل الحضور
 function renderAttendance() {
   const tbody = document.querySelector("#attendanceTable tbody");
   tbody.innerHTML = "";
 
   let present = attendance.filter(r => r.status.trim() === "حاضر");
 
-  // إزالة التكرار
   present = uniqueByID(present);
 
   present.forEach((r) => {
     tbody.innerHTML += `
-<tr class="border-b">
+<tr align=center class="border-b">
   <td>${r.ID}</td>
   <td>${r.name}</td>
   <td>${r.grade}</td>
   <td>${r.class}</td>
   <td>${r.parentMobile}</td>
-  <td>${r.time}</td>
-  <td>${r.date}</td>
+  <td>${formatTime(r.time)}</td>
+  <td>${formatDate(r.date)}</td>
   <td>${r.status}</td>
 </tr>`;
   });
 }
-
-
 
 
 
@@ -522,12 +601,14 @@ function renderAbsent() {
 
   absent.forEach((s) => {
     tbody.innerHTML += `
-<tr class="border-b">
-  <td>${s.name}</td>
+
+<tr align= center class="border-b">
   <td>${s.ID}</td>
+  <td>${s.name}</td>
   <td>${s.grade}</td>
   <td>${s.class}</td>
 </tr>`;
+
   });
 }
 
@@ -539,22 +620,20 @@ function renderLate() {
   const tbody = document.querySelector("#lateTable tbody");
   tbody.innerHTML = "";
 
-  let late = attendance.filter(r => r.status.trim() === "متأخر");
-
-  // إزالة التكرار
-  late = uniqueByID(late);
+  const late = attendance.filter(r => r.status.trim() === "متأخر");
 
   late.forEach((r) => {
     tbody.innerHTML += `
 <tr class="border-b">
-  <td>${r.ID}</td>
-  <td>${r.name}</td>
-  <td>${r.grade}</td>
-  <td>${r.class}</td>
-  <td>${r.time}</td>
+  <td class="px-3 py-2">${r.ID}</td>
+  <td class="px-3 py-2">${r.name}</td>
+  <td class="px-3 py-2">${r.grade}</td>
+  <td class="px-3 py-2">${r.class}</td>
+  <td class="px-3 py-2">${r.time}</td>
 </tr>`;
   });
 }
+
 
 
 // إحصائيات بسيطة (إن وُجدت العناصر)
