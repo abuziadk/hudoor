@@ -324,6 +324,22 @@ function formatDate(isoString) {
     day: "2-digit"
   });
 }
+/* ===========================================================
+   🔥 تحويل التاريخ للميلادي → هجري
+=========================================================== */
+function toHijri(dateInput) {
+    if (!dateInput) return "";
+
+    const date = new Date(dateInput);
+
+    const formatted = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    }).format(date);
+
+    return formatted + " هـ";
+}
 
 document.getElementById("todayLabel").textContent =
   new Date().toLocaleDateString("ar-SA");
@@ -817,8 +833,19 @@ function renderAttendance() {
   const tbody = document.querySelector("#attendanceTable tbody");
   tbody.innerHTML = "";
 
-  let present = attendance.filter(r => r.status.trim() === "حاضر");
-  present.forEach((r) => {
+  // عرض كل سجلات اليوم: حاضر + متأخر + غائب
+  const todayRecords = attendance.filter(r => {
+    if (!r.date) return false;
+    const dt = new Date(r.date);
+    const today = new Date();
+    return (
+      dt.getFullYear() === today.getFullYear() &&
+      dt.getMonth() === today.getMonth() &&
+      dt.getDate() === today.getDate()
+    );
+  });
+
+  todayRecords.forEach((r) => {
     tbody.innerHTML += `
 <tr align=center class="border-b">
   <td>${r.ID}</td>
@@ -887,18 +914,19 @@ function updateStats() {
     const m = today.getMonth();
     const d = today.getDate();
 
-    // سجلات اليوم فقط
     const todayRecords = attendance.filter(a => {
         if (!a.date) return false;
         const dt = new Date(a.date);
         return dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d;
     });
 
-    const present = todayRecords.filter(a => a.status === "حاضر").length;
+    const presentOnly = todayRecords.filter(a => a.status === "حاضر").length;
     const late = todayRecords.filter(a => a.status === "متأخر").length;
 
-    // الغياب الصحيح
-    const absent = totalStudents - present - late;
+    // المتأخر يعتبر حاضر
+    const present = presentOnly + late;
+
+    const absent = totalStudents - present;
 
     document.getElementById("adminTotalStudents").textContent = totalStudents;
     document.getElementById("adminPresent").textContent = present;
@@ -908,7 +936,6 @@ function updateStats() {
     const rate = totalStudents > 0 ? Math.round((present / totalStudents) * 100) : 0;
     document.getElementById("adminRate").textContent = rate + "%";
 }
-
 function exportAbsence() {
     const absent = attendance.filter(r => r.status.trim() === "غائب");
 
@@ -994,6 +1021,7 @@ async function getBalance() {
   document.getElementById("smsBalance").textContent =
     "رصيد الرسائل: " + balance;
 }
+
 loadStudentsFromSheet();
 loadAttendanceFromSheet();
 updateStats();
