@@ -221,7 +221,12 @@
             </thead>
             <tbody></tbody>
         </table>
+		<button onclick="sendAllAbsenceSMS()" class="btn-export" style="background:#047857">
+    إرسال رسائل الغياب
+</button>
+
         <button onclick="exportAbsence()" class="btn-export">تصدير الغياب</button>
+		
     </div>
 </div>
 
@@ -326,7 +331,7 @@ document.getElementById("todayLabel").textContent =
 /* ===========================================================
    🔥 المتغيرات العامة
 =========================================================== */
-const API_URL = "https://script.google.com/macros/s/AKfycbxz7aDcqlDV497k5VQL4bL3nPXmoYQM-BT4EmpClm9OwcbsIhfWISfTH2angU2aLkR8CQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzEBAyyKkeAuKg7Gf3HaTTfZ4YXyByNxjyRD-I4YC0rAWRTS7C6z0Vsy2htsjmmt1_7bQ/exec";
 const SMS_API_URL = "https://app.mobile.net.sa/api/v1/send";
 const SMS_BALANCE_URL = "https://app.mobile.net.sa/api/v1/get-balance";
 const SMS_API_KEY = "XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr";
@@ -488,6 +493,80 @@ function saveStudentToSheet(s) {
   form.append("token", s.token);
   fetch(API_URL, { method: "POST", body: form });
 }
+function getFirstName(fullName) {
+    if (!fullName) return "";
+    return fullName.split(" ")[0]; // يأخذ أول كلمة فقط
+}
+
+async function sendAbsenceSMS(student) {
+    try {
+        const mobile = normalizeMobile(student.parentMobile);
+        if (!mobile) {
+            console.warn("رقم غير صالح:", student.parentMobile);
+            return;
+        }
+
+        const firstName = getFirstName(student.name);
+        const hijriDate = toHijri(new Date());
+
+const msg = `ابنكم ${firstName} غاب عن المدرسة اليوم  ${hijriDate}.\u200B`;
+
+        const payload = {
+            number: mobile,
+            senderName: SMS_SENDER_NAME,
+            sendAtOption: "NOW",
+            messageBody: msg,
+        };
+
+        const res = await fetch(SMS_API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + SMS_API_KEY,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const result = await res.json().catch(() => null);
+
+        console.log("رد API:", result);
+
+        if (!result) {
+            alert("لم يتم استلام رد من مزود الخدمة");
+            return;
+        }
+
+        if (result.status !== "Success" && result.status !== "success") {
+    alert("فشل إرسال الرسالة: " + JSON.stringify(result));
+    return;
+}
+
+
+        console.log("تم إرسال رسالة الغياب إلى:", student.name);
+
+    } catch (err) {
+        console.error("خطأ أثناء إرسال رسالة الغياب:", err);
+        alert("حدث خطأ أثناء الإرسال: " + err.message);
+    }
+}
+
+
+async function sendAllAbsenceSMS() {
+    const absent = attendance.filter(r => r.status.trim() === "غائب");
+
+    if (absent.length === 0) {
+        alert("لا يوجد طلاب غائبين اليوم");
+        return;
+    }
+
+    for (const stu of absent) {
+        await sendAbsenceSMS(stu);
+        await new Promise(r => setTimeout(r, 500)); // مهلة نصف ثانية بين الرسائل
+    }
+
+    alert("تم إرسال رسائل الغياب لجميع أولياء الأمور");
+}
+
 
 /* ===========================================================
    🔥 عرض الطلاب + QR
@@ -581,6 +660,7 @@ async function loadStudentsFromSheet() {
             parentMobile: String(s.parentMobile).trim(),
             token: s.token
         }));
+console.log("عدد الطلاب المحمّلين:", students.length);
 
         console.log("تم تحميل الطلاب:", students.length);
 
@@ -800,62 +880,34 @@ function renderLate() {
    🔥 إحصائيات لوحة المدير (إصدار محسّن)
 =========================================================== */
 function updateStats() {
-  // 1) إجمالي الطلاب
-  let totalStudents = students.length;
+    const totalStudents = students.length;
 
-  // لو ما فيه طلاب في المصفوفة (ما تم استيراد إكسل في هذه الجلسة)
-  // نحسبهم من سجل الحضور (IDs المميزة)
-  if (!totalStudents && attendance.length) {
-    const uniqueIDs = [...new Set(attendance.map(a => a.ID))];
-    totalStudents = uniqueIDs.length;
-  }
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const d = today.getDate();
 
-  // 2) تجهيز تاريخ اليوم (مقارنة بالتاريخ في السجل)
-  const today = new Date();
-  const todayY = today.getFullYear();
-  const todayM = today.getMonth();
-  const todayD = today.getDate();
+    // سجلات اليوم فقط
+    const todayRecords = attendance.filter(a => {
+        if (!a.date) return false;
+        const dt = new Date(a.date);
+        return dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d;
+    });
 
-  const todayRecords = attendance.filter(a => {
-    if (!a.date) return false;
-    const d = new Date(a.date);
-    if (isNaN(d)) return false;
-    return (
-      d.getFullYear() === todayY &&
-      d.getMonth() === todayM &&
-      d.getDate() === todayD
-    );
-  });
+    const present = todayRecords.filter(a => a.status === "حاضر").length;
+    const late = todayRecords.filter(a => a.status === "متأخر").length;
 
-  // 3) حساب الحالات
-  const present = todayRecords.filter(a => a.status && a.status.trim() === "حاضر").length;
-  const late    = todayRecords.filter(a => a.status && a.status.trim() === "متأخر").length;
-  const absent  = totalStudents > 0 ? (totalStudents - present) : 0;
+    // الغياب الصحيح
+    const absent = totalStudents - present - late;
 
-  // 4) نسبة الحضور
-  const rate = totalStudents > 0 ? Math.round((present / totalStudents) * 100) : 0;
+    document.getElementById("adminTotalStudents").textContent = totalStudents;
+    document.getElementById("adminPresent").textContent = present;
+    document.getElementById("adminLate").textContent = late;
+    document.getElementById("adminAbsent").textContent = absent;
 
-  // 5) تحديث الواجهة
-  document.getElementById("adminTotalStudents").textContent = totalStudents;
-  document.getElementById("adminPresent").textContent       = present;
-  document.getElementById("adminLate").textContent          = late;
-  document.getElementById("adminAbsent").textContent        = absent;
-  document.getElementById("adminRate").textContent          = rate + "%";
+    const rate = totalStudents > 0 ? Math.round((present / totalStudents) * 100) : 0;
+    document.getElementById("adminRate").textContent = rate + "%";
 }
-function toHijri(dateString) {
-    const d = new Date(dateString);
-    if (isNaN(d)) return "";
-
-    // نطرح يوم واحد لتصحيح فرق أم القرى
-    d.setDate(d.getDate() - 1);
-
-    return new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric"
-    }).format(d);
-}
-
 
 function exportAbsence() {
     const absent = attendance.filter(r => r.status.trim() === "غائب");
@@ -944,6 +996,7 @@ async function getBalance() {
 }
 loadStudentsFromSheet();
 loadAttendanceFromSheet();
+updateStats();
 
 getBalance();
 </script>
