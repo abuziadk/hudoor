@@ -497,6 +497,29 @@ function normalizeMobile(n) {
   return n;
 }
 
+async function loadStudentsFromSheet() {
+    try {
+        const res = await fetch(API_URL + "?action=getStudents");
+        const data = await res.json();
+
+        students = data.map(s => ({
+            ID: String(s.ID).trim(),
+            name: s.name,
+            grade: s.grade,
+            class: s.class,
+            parentMobile: String(s.parentMobile).trim(),
+            token: s.token
+        }));
+
+        console.log("تم تحميل الطلاب:", students.length);
+
+        updateStats(); // ← مهم جداً
+
+    } catch (e) {
+        console.error("خطأ في تحميل الطلاب:", e);
+    }
+}
+
 async function confirmSendSMS() {
   const msg = document.getElementById("smsMessage").value.trim();
   if (!msg) return alert("اكتب نص الرسالة");
@@ -748,6 +771,87 @@ function updateStats() {
   document.getElementById("adminAbsent").textContent        = absent;
   document.getElementById("adminRate").textContent          = rate + "%";
 }
+function toHijri(dateString) {
+    const d = new Date(dateString);
+    if (isNaN(d)) return "";
+
+    // نطرح يوم واحد لتصحيح فرق أم القرى
+    d.setDate(d.getDate() - 1);
+
+    return new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    }).format(d);
+}
+
+
+function exportAbsence() {
+    const absent = attendance.filter(r => r.status.trim() === "غائب");
+
+    if (absent.length === 0) {
+        alert("لا يوجد غياب لتصديره");
+        return;
+    }
+
+    const rows = absent.map(r => ({
+        ID: r.ID,
+        الاسم: r.name,
+        الصف: r.grade,
+        الفصل: r.class,
+        التاريخ_الهجري: toHijri(r.date)   // ← التاريخ الهجري
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    ws['!cols'] = [
+        { wch: 10 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 15 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "الغياب");
+
+    XLSX.writeFile(wb, "غياب_الطلاب_هجري.xlsx");
+}
+
+
+function exportLate() {
+    const late = attendance.filter(r => r.status.trim() === "متأخر");
+
+    if (late.length === 0) {
+        alert("لا يوجد متأخرون لتصديرهم");
+        return;
+    }
+
+    const rows = late.map(r => ({
+        ID: r.ID,
+        الاسم: r.name,
+        الصف: r.grade,
+        الفصل: r.class,
+        الوقت: formatTime(r.time),
+        التاريخ_الهجري: toHijri(r.date)   // ← التاريخ الهجري
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    ws['!cols'] = [
+        { wch: 10 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 15 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "المتأخرون");
+
+    XLSX.writeFile(wb, "المتأخرون_هجري.xlsx");
+}
 
 /* ===========================================================
    🔥 رصيد الرسائل
@@ -767,9 +871,10 @@ async function getBalance() {
   document.getElementById("smsBalance").textContent =
     "رصيد الرسائل: " + balance;
 }
+loadStudentsFromSheet();
+loadAttendanceFromSheet();
 
 getBalance();
-loadAttendanceFromSheet();
 </script>
 
 </body>
