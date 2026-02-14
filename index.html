@@ -7,25 +7,85 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-.btn-export {
-    margin-top: 8px;
-    padding: 6px 12px;
-    background-color: #2563eb;
-    color: white;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-}
-.btn-export:hover { background-color: #1e40af; }
+    body {
+        font-family: "Tajawal", sans-serif;
+        background: linear-gradient(135deg, #f3f6f4, #e7f1ed);
+        min-height: 100vh;
+    }
 
-body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; }
-.moe-green { color: #017c67; }
-.moe-btn { background-color: #017c67; color: white; }
-.moe-btn:hover { background-color: #026f5d; }
-.moe-card { background: white; border-radius: 16px; border: 1px solid #d9e3df; padding: 20px; }
-.moe-tab-active { background-color: #017c67 !important; color: white !important; }
+    .moe-green {
+        color: #017c67;
+    }
+
+    .moe-btn {
+        background: linear-gradient(135deg, #017c67, #029a82);
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(1, 124, 103, 0.3);
+    }
+
+    .moe-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(1, 124, 103, 0.4);
+    }
+
+    .moe-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        border-radius: 18px;
+        border: 1px solid rgba(1, 124, 103, 0.15);
+        padding: 22px;
+        transition: all 0.3s ease;
+    }
+
+    .moe-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-btn {
+        transition: all 0.25s ease;
+    }
+
+    .tab-btn:hover {
+        background-color: #d1fae5 !important;
+        transform: translateY(-2px);
+    }
+
+    .moe-tab-active {
+        background: linear-gradient(135deg, #017c67, #029a82) !important;
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(1, 124, 103, 0.4);
+    }
+
+    table th {
+        font-weight: bold;
+        letter-spacing: 0.3px;
+    }
+
+    table tr:hover {
+        background-color: #f0fdf4;
+        transition: 0.2s;
+    }
+
+    .btn-export {
+        margin-top: 10px;
+        padding: 7px 14px;
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        color: white;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    }
 </style>
+
 </head>
 
 <body>
@@ -33,17 +93,26 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 <div class="moe-card shadow-md">
 
 <!-- Header -->
-<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
-<div>
-<h1 class="text-3xl font-bold moe-green">نظام حضور الطلاب</h1>
-<p class="text-gray-500 mt-1 text-sm">متوافق مع وزارة التعليم – QR + Google Sheets + SMS</p>
+<div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b pb-4">
+
+    <div>
+        <h1 class="text-4xl font-extrabold moe-green tracking-wide">
+            نظام حضور الطلاب
+        </h1>
+        <p class="text-gray-500 mt-1 text-sm">
+            منصة ذكية لإدارة الحضور – QR + Google Sheets + SMS
+        </p>
+    </div>
+
+    <div class="text-sm bg-white px-4 py-3 rounded-xl shadow-sm border">
+        <div><strong>📅 التاريخ:</strong> <span id="todayLabel"></span></div>
+        <div id="smsBalance" class="mt-1 text-xs font-semibold text-green-700">
+            جاري جلب رصيد الرسائل...
+        </div>
+    </div>
+
 </div>
 
-<div class="text-sm text-gray-700">
-<div><strong>التاريخ:</strong> <span id="todayLabel"></span></div>
-<div id="smsBalance" class="mt-1 text-xs font-semibold text-green-700">جاري جلب رصيد الرسائل...</div>
-</div>
-</div>
 
 <!-- Tabs -->
 <div class="grid grid-cols-2 md:grid-cols-7 gap-2 mb-6">
@@ -65,11 +134,13 @@ body { font-family: "Tajawal", sans-serif; background: #f3f6f4; direction: rtl; 
 
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 <div class="moe-card text-center">
+
 <p class="text-gray-600 text-sm mb-1">إجمالي الطلاب</p>
 <p id="adminTotalStudents" class="text-2xl font-bold moe-green">0</p>
 </div>
 
 <div class="moe-card text-center">
+
 <p class="text-gray-600 text-sm mb-1">الحاضرون اليوم</p>
 <p id="adminPresent" class="text-2xl font-bold text-green-700">0</p>
 </div>
@@ -876,6 +947,7 @@ loadAttendanceFromSheet();
 
 getBalance();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </body>
 </html>
