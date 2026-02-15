@@ -305,6 +305,7 @@
 /* ===========================================================
    🔥 دوال الوقت والتاريخ
 =========================================================== */
+
 function formatTime(isoString) {
   if (!isoString) return "";
   const date = new Date(isoString);
@@ -525,7 +526,11 @@ async function sendAbsenceSMS(student) {
         const firstName = getFirstName(student.name);
         const hijriDate = toHijri(new Date());
 
-const msg = `ابنكم ${firstName} غاب عن المدرسة اليوم  ${hijriDate}.\u200B`;
+        // 🔥 رقم متغير يمنع رفض الرسالة بسبب duplicate message
+        const stamp = new Date().getTime().toString().slice(-4);
+
+        // 🔥 الرسالة النهائية بعد الدمج
+        const msg = `ابنكم ${firstName} غاب عن المدرسة اليوم ${hijriDate} – ${stamp}`;
 
         const payload = {
             number: mobile,
@@ -553,10 +558,9 @@ const msg = `ابنكم ${firstName} غاب عن المدرسة اليوم  ${hi
         }
 
         if (result.status !== "Success" && result.status !== "success") {
-    alert("فشل إرسال الرسالة: " + JSON.stringify(result));
-    return;
-}
-
+            alert("فشل إرسال الرسالة: " + JSON.stringify(result));
+            return;
+        }
 
         console.log("تم إرسال رسالة الغياب إلى:", student.name);
 
