@@ -338,7 +338,7 @@ function toHijri(dateInput) {
         year: "numeric"
     }).format(date);
 
-    return formatted + " هـ";
+    return formatted 
 }
 
 document.getElementById("todayLabel").textContent =
@@ -938,19 +938,26 @@ function updateStats() {
 }
 function exportAbsence() {
     const absent = attendance.filter(r => r.status.trim() === "غائب");
+	
 
     if (absent.length === 0) {
         alert("لا يوجد غياب لتصديره");
         return;
     }
 
-    const rows = absent.map(r => ({
+    const rows = absent.map(r => {
+    const fixedDate = new Date(r.date.split("T")[0]); // الحل النهائي
+
+    return {
         ID: r.ID,
         الاسم: r.name,
         الصف: r.grade,
         الفصل: r.class,
-        التاريخ_الهجري: toHijri(r.date)   // ← التاريخ الهجري
-    }));
+        التاريخ_الهجري: toHijri(fixedDate)
+    };
+});
+
+
 
     const ws = XLSX.utils.json_to_sheet(rows);
 
@@ -977,14 +984,19 @@ function exportLate() {
         return;
     }
 
-    const rows = late.map(r => ({
+    const rows = late.map(r => {
+    const fixedDate = new Date(r.date.split("T")[0]); // الحل النهائي
+
+    return {
         ID: r.ID,
         الاسم: r.name,
         الصف: r.grade,
         الفصل: r.class,
         الوقت: formatTime(r.time),
-        التاريخ_الهجري: toHijri(r.date)   // ← التاريخ الهجري
-    }));
+        التاريخ_الهجري: toHijri(fixedDate)
+    };
+});
+
 
     const ws = XLSX.utils.json_to_sheet(rows);
 
