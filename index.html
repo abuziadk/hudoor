@@ -942,7 +942,6 @@ function updateStats() {
 }
 function exportAbsence() {
     const absent = attendance.filter(r => r.status.trim() === "غائب");
-	
 
     if (absent.length === 0) {
         alert("لا يوجد غياب لتصديره");
@@ -950,18 +949,29 @@ function exportAbsence() {
     }
 
     const rows = absent.map(r => {
-    const fixedDate = new Date(r.date.split("T")[0]); // الحل النهائي
+        // استخراج التاريخ فقط بدون الوقت
+        const dateOnly = r.date.split("T")[0]; // مثال: 2026-03-09
 
-    return {
-        ID: r.ID,
-        الاسم: r.name,
-        الصف: r.grade,
-        الفصل: r.class,
-        التاريخ_الهجري: toHijri(fixedDate)
-    };
-});
+        // تحويل النص إلى أجزاء
+        const parts = dateOnly.split("-");
+        const y = parseInt(parts[0]);
+        const m = parseInt(parts[1]) - 1;
+        const d = parseInt(parts[2]);
 
+        // إنقاص يوم واحد
+        const corrected = new Date(y, m, d - 1, 12, 0, 0);
 
+        // تحويله إلى نص بنفس صيغة yyyy-mm-dd
+        const correctedStr = corrected.toISOString().split("T")[0];
+
+        return {
+            ID: r.ID,
+            الاسم: r.name,
+            الصف: r.grade,
+            الفصل: r.class,
+            التاريخ_الهجري: toHijri(correctedStr)
+        };
+    });
 
     const ws = XLSX.utils.json_to_sheet(rows);
 
@@ -970,7 +980,7 @@ function exportAbsence() {
         { wch: 20 },
         { wch: 10 },
         { wch: 10 },
-        { wch: 15 }
+        { wch: 20 }
     ];
 
     const wb = XLSX.utils.book_new();
@@ -978,7 +988,6 @@ function exportAbsence() {
 
     XLSX.writeFile(wb, "غياب_الطلاب_هجري.xlsx");
 }
-
 
 function exportLate() {
     const late = attendance.filter(r => r.status.trim() === "متأخر");
@@ -1048,6 +1057,7 @@ getBalance();
 
 </body>
 </html>
+
 
 
 
