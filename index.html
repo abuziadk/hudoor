@@ -959,10 +959,8 @@ function exportAbsence() {
         const d = parseInt(parts[2]);
 
         // إنقاص يوم واحد
-        const corrected = new Date(y, m, d - 1, 12, 0, 0);
+       
 
-        // تحويله إلى نص بنفس صيغة yyyy-mm-dd
-        const correctedStr = corrected.toISOString().split("T")[0];
 
         return {
             ID: r.ID,
@@ -1069,6 +1067,7 @@ getBalance();
 
 </body>
 </html>
+
 
 
 
