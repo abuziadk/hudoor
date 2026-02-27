@@ -1,3 +1,946 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>نظام حضور الطلاب</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+.admin-dashboard {
+    padding: 20px;
+    direction: rtl;
+    font-family: "Tajawal", sans-serif;
+}
+
+.dashboard-title {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 26px;
+    color: #333;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.chart-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.chart-card h3 {
+    margin-bottom: 15px;
+    font-size: 20px;
+    color: #444;
+}
+
+body {
+    font-family: "Tajawal", sans-serif;
+    background: linear-gradient(135deg, #f3f6f4, #e7f1ed);
+    min-height: 100vh;
+}
+
+.moe-green {
+    color: #017c67;
+}
+
+.moe-btn {
+    background: linear-gradient(135deg, #017c67, #029a82);
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(1, 124, 103, 0.3);
+}
+
+.moe-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(1, 124, 103, 0.4);
+}
+
+.moe-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 18px;
+    border: 3px solid rgba(1, 124, 103, 0.15);
+    padding: 22px;
+    transition: all 0.3s ease;
+}
+
+.moe-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+.tab-btn {
+    transition: all 0.25s ease;
+}
+
+.tab-btn:hover {
+    background-color: #d1fae5 !important;
+    transform: translateY(-2px);
+}
+
+.moe-tab-active {
+    background: linear-gradient(135deg, #017c67, #029a82) !important;
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(1, 124, 103, 0.4);
+}
+
+table th {
+    font-weight: bold;
+    letter-spacing: 0.3px;
+}
+
+table tr:hover {
+    background-color: #f0fdf4;
+    transition: 0.2s;
+}
+
+.btn-export {
+    margin-top: 10px;
+    padding: 7px 14px;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: white;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+</style>
+
+<!-- Firebase compat -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+</head>
+
+<body>
+<div class="max-w-6xl mx-auto p-4 md:p-6">
+<div class="moe-card shadow-md">
+
+<!-- Header -->
+<div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b pb-4">
+
+    <div>
+        <h1 class="text-4xl font-extrabold moe-green tracking-wide">
+            نظام حضور الطلاب
+        </h1>
+        <p class="text-gray-500 mt-1 text-sm">
+            مدرسة تحفيظ القرآن الكريم الابتدئية والمتوسطة بضمد 
+        </p>
+    </div>
+
+    <div class="text-sm bg-white px-4 py-3 rounded-xl shadow-sm border">
+        <div><strong>📅 التاريخ:</strong> <span id="todayLabel"></span></div>
+        <div id="smsBalance" class="mt-1 text-xs font-semibold text-green-700">
+            جاري جلب رصيد الرسائل...
+        </div>
+    </div>
+
+</div>
+
+<!-- Tabs -->
+<div class="grid grid-cols-2 md:grid-cols-7 gap-2 mb-6">
+
+<button onclick="openAdminSection()" class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold moe-tab-active" data-target="section-admin">DASHBOARD</button>
+<button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-excel">إنشاء QR</button>
+<button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-scan">مسح QR</button>
+<button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-attendance">الحضور</button>
+<button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-absent">الغياب</button>
+<button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-late">التأخر</button>
+<button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-search">البحث</button>
+
+</div>
+
+<!-- لوحة المدير -->
+<div id="section-admin" class="section">
+
+    <!-- البطاقات العلوية -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+
+        <div class="moe-card text-center">
+            <p class="text-gray-600 text-sm mb-1">إجمالي الطلاب</p>
+            <p id="adminTotalStudents" class="text-2xl font-bold moe-green">0</p>
+        </div>
+
+        <div class="moe-card text-center">
+            <p class="text-gray-600 text-sm mb-1">الحاضرون اليوم</p>
+            <p id="adminPresent" class="text-2xl font-bold text-green-700">0</p>
+        </div>
+
+        <div class="moe-card text-center">
+            <p class="text-gray-600 text-sm mb-1">التأخر</p>
+            <p id="adminLate" class="text-2xl font-bold text-orange-600">0</p>
+        </div>
+
+        <div class="moe-card text-center">
+            <p class="text-gray-600 text-sm mb-1">الغياب</p>
+            <p id="adminAbsent" class="text-2xl font-bold text-red-600">0</p>
+        </div>
+
+    </div>
+
+    <!-- 🔥 حقول التحكم بالوقت -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+        <div class="moe-card text-center">
+            <label class="font-bold text-gray-700">بداية الحضور (StartPresent)</label>
+            <input type="time" id="StartPresent" value="06:00"
+                   class="border p-2 rounded mt-2 text-center w-full">
+        </div>
+
+        <div class="moe-card text-center">
+            <label class="font-bold text-gray-700">نهاية الحضور (EndPresent)</label>
+            <input type="time" id="EndPresent" value="07:30"
+                   class="border p-2 rounded mt-2 text-center w-full">
+        </div>
+
+        <div class="moe-card text-center">
+            <label class="font-bold text-gray-700">نهاية التأخر (EndLate)</label>
+            <input type="time" id="EndLate" value="08:00"
+                   class="border p-2 rounded mt-2 text-center w-full">
+        </div>
+
+    </div>
+
+    <!-- نسبة الحضور -->
+    <div class="moe-card text-center mb-8">
+        <p class="text-gray-600 text-sm mb-1">نسبة الحضور</p>
+        <p id="adminRate" class="text-3xl font-bold text-blue-700">0%</p>
+    </div>
+
+    <!-- الرسوم البيانية -->
+    <div class="admin-dashboard">
+
+        <div class="charts-grid">
+
+            <div class="chart-card">
+                <h3>الغياب اليومي</h3>
+                <canvas id="dailyAbsenceChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h3>التأخر اليومي</h3>
+                <canvas id="dailyLateChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h3>مقارنة الصفوف (غياب)</h3>
+                <canvas id="gradeAbsenceChart"></canvas>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</div>
+<!-- مسح QR -->
+<div id="section-scan" class="section hidden">
+    <div id="reader" class="w-full max-w-md mx-auto border-2 border-green-700 rounded-xl"></div>
+    <p id="scanMessage" class="text-center mt-4 text-sm font-bold"></p>
+</div>
+
+<!-- سجل الحضور -->
+<div id="section-attendance" class="section hidden">
+    <div class="moe-card overflow-x-auto">
+        <table class="min-w-full text-sm" id="attendanceTable">
+            <thead class="bg-green-700 text-white">
+                <tr>
+                    <th class="px-3 py-2">ID</th>
+                    <th class="px-3 py-2">الاسم</th>
+                    <th class="px-3 py-2">الصف</th>
+                    <th class="px-3 py-2">الفصل</th>
+                    <th class="px-3 py-2">رقم ولي الأمر</th>
+                    <th class="px-3 py-2">الوقت</th>
+                    <th class="px-3 py-2">التاريخ</th>
+                    <th class="px-3 py-2">الحالة</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- الغياب -->
+<div id="section-absent" class="section hidden">
+    <div class="moe-card overflow-x-auto">
+        <table class="min-w-full text-sm" id="absentTable">
+            <thead class="bg-red-600 text-white">
+                <tr>
+                    <th class="px-3 py-2">ID</th>
+                    <th class="px-3 py-2">الاسم</th>
+                    <th class="px-3 py-2">الصف</th>
+                    <th class="px-3 py-2">الفصل</th>
+                    <th class="px-3 py-2">التاريخ</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <button onclick="sendAllAbsenceSMS()" class="btn-export" style="background:#047857">
+            إرسال رسائل الغياب
+        </button>
+
+        <button onclick="exportAbsence()" class="btn-export">تصدير الغياب</button>
+    </div>
+</div>
+
+<!-- المتأخرون -->
+<div id="section-late" class="section hidden">
+    <div class="moe-card overflow-x-auto">
+        <table class="min-w-full text-sm" id="lateTable">
+            <thead class="bg-orange-500 text-white">
+                <tr>
+                    <th class="px-3 py-2">ID</th>
+                    <th class="px-3 py-2">الاسم</th>
+                    <th class="px-3 py-2">الصف</th>
+                    <th class="px-3 py-2">الفصل</th>
+                    <th class="px-3 py-2">الوقت</th>
+                    <th class="px-3 py-2">التاريخ</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button onclick="exportLate()" class="btn-export">تصدير المتأخرين</button>
+    </div>
+</div>
+
+<!-- البحث -->
+<div id="section-search" class="section hidden">
+    <h2 class="text-xl font-bold moe-green mb-4">البحث عن غياب طالب</h2>
+
+    <div class="moe-card p-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+            <div>
+                <label class="block mb-1 font-semibold">رقم الطالب (ID)</label>
+                <input id="searchID" type="text" class="w-full border p-2 rounded" placeholder="مثال: 1059">
+            </div>
+
+            <div>
+                <label class="block mb-1 font-semibold">من تاريخ</label>
+                <input id="searchFrom" type="date" class="w-full border p-2 rounded">
+            </div>
+
+            <div>
+                <label class="block mb-1 font-semibold">إلى تاريخ</label>
+                <input id="searchTo" type="date" class="w-full border p-2 rounded">
+            </div>
+
+            <div class="flex items-end">
+                <button onclick="searchBetweenDates()" class="moe-btn px-4 py-2 rounded-lg w-full">
+                    بحث بين تاريخين
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="moe-card overflow-x-auto">
+        <table class="min-w-full text-sm" id="searchResultTable">
+            <thead class="bg-blue-600 text-white">
+                <tr align="center">
+                    <th class="px-3 py-2">ID</th>
+                    <th class="px-3 py-2">الاسم</th>
+                    <th class="px-3 py-2">الصف</th>
+                    <th class="px-3 py-2">الفصل</th>
+                    <th class="px-3 py-2">التاريخ</th>
+                    <th class="px-3 py-2">الحالة</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- قسم إنشاء QR -->
+<div id="section-excel" class="section hidden">
+    <div class="moe-card mb-4">
+        <h2 class="text-xl font-bold moe-green mb-3">استيراد الطلاب من Excel</h2>
+        <input type="file" id="excelFile" class="mb-3" />
+        <button id="btnImportExcel" class="moe-btn px-4 py-2 rounded-lg">استيراد</button>
+        <p id="excelStatus" class="mt-2 text-sm text-gray-600"></p>
+    </div>
+
+    <div class="moe-card" id="studentsContainer">
+        <!-- سيتم تعبئته بالطلاب + QR -->
+    </div>
+</div>
+
+<!-- مودال SMS -->
+<div id="smsModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden">
+  <div class="bg-white rounded-xl p-6 max-w-md w-full">
+    <h3 class="text-lg font-bold mb-3 moe-green">إرسال رسالة SMS</h3>
+    <p id="smsTargetLabel" class="mb-3 text-sm text-gray-700"></p>
+    <p class="text-xs text-gray-500 mb-4">سيتم إرسال رسالة غياب تلقائية لولي الأمر.</p>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeSMSModal()" class="px-3 py-1 rounded bg-gray-200 text-sm">إلغاء</button>
+      <button onclick="sendAbsenceSMS(smsTarget)" class="px-3 py-1 rounded bg-green-600 text-white text-sm">إرسال</button>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<script>
+// ======================= Firebase config =======================
+const firebaseConfig = {
+  apiKey: "AIzaSyCtzKF6tPdNF9NP34xbz0VNALLU_pW5Tkw",
+  authDomain: "attendancesystem-d46ba.firebaseapp.com",
+  databaseURL: "https://attendancesystem-d46ba-default-rtdb.firebaseio.com/",
+  projectId: "attendancesystem-d46ba",
+  storageBucket: "attendancesystem-d46ba.firebasestorage.app",
+  messagingSenderId: "472598700266",
+  appId: "1:472598700266:web:de916774d90fbe518cb793",
+  measurementId: "G-Z6YXDGFHRY"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ======================= الوقت والتاريخ =======================
+document.getElementById("todayLabel").textContent =
+  new Date().toLocaleDateString("ar-SA");
+
+// ======================= المتغيرات العامة =======================
+let students = [];
+let attendance = [];
+let lastAbsent = [];
+let scanner = null;
+let smsTarget = null;
+
+// ======================= نظام الوقت اليدوي =======================
+// القيم الافتراضية
+let START_PRESENT = "06:00";
+let END_PRESENT = "07:30";
+let END_LATE = "08:00";
+
+// تحديث القيم عند تغييرها من الواجهة
+document.getElementById("StartPresent").addEventListener("change", e => {
+    START_PRESENT = e.target.value;
+});
+
+document.getElementById("EndPresent").addEventListener("change", e => {
+    END_PRESENT = e.target.value;
+});
+
+document.getElementById("EndLate").addEventListener("change", e => {
+    END_LATE = e.target.value;
+});
+
+// ======================= دالة تحديد حالة الطالب =======================
+function getAttendanceStatus(timeStr) {
+    if (!timeStr) return "غائب";
+
+    const [h, m] = timeStr.replace("م","").replace("ص","").split(":").map(Number);
+    const studentMin = h * 60 + m;
+
+    const [sH, sM] = START_PRESENT.split(":").map(Number);
+    const startMin = sH * 60 + sM;
+
+    const [eH, eM] = END_PRESENT.split(":").map(Number);
+    const endPresentMin = eH * 60 + eM;
+
+    const [lH, lM] = END_LATE.split(":").map(Number);
+    const endLateMin = lH * 60 + lM;
+
+    if (studentMin < startMin) return "غير محسوب";
+    if (studentMin <= endPresentMin) return "حاضر";
+    if (studentMin <= endLateMin) return "متأخر";
+    return "غائب";
+}
+
+// ======================= نظام التابات =======================
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".section").forEach((s) => s.classList.add("hidden"));
+    document.getElementById(btn.dataset.target).classList.remove("hidden");
+
+    document.querySelectorAll(".tab-btn").forEach((b) =>
+      b.classList.remove("moe-tab-active")
+    );
+    btn.classList.add("moe-tab-active");
+
+    const today = new Date().toISOString().split("T")[0];
+
+    if (btn.dataset.target === "section-scan") {
+      setTimeout(() => startScanner(), 500);
+    }
+    if (btn.dataset.target === "section-attendance") {
+      loadAttendanceFromFirebase(today, () => renderAttendance());
+    }
+    if (btn.dataset.target === "section-absent") {
+      loadAttendanceFromFirebase(today, () => renderAbsent());
+    }
+    if (btn.dataset.target === "section-late") {
+      loadAttendanceFromFirebase(today, () => renderLate());
+    }
+    if (btn.dataset.target === "section-admin") {
+      loadAttendanceFromFirebase(today, () => loadAdminDashboard());
+    }
+  });
+});
+
+// ======================= لوحة المدير =======================
+function openAdminSection() {
+  document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
+  document.getElementById("section-admin").classList.remove("hidden");
+  const today = new Date().toISOString().split("T")[0];
+  setTimeout(() => {
+    loadAttendanceFromFirebase(today, () => loadAdminDashboard());
+  }, 200);
+}
+
+// ======================= تحميل الحضور من Firebase =======================
+function loadAttendanceFromFirebase(date, callback) {
+  const ref = db.ref("attendance/" + date);
+  ref.once("value").then(snapshot => {
+    const data = snapshot.val();
+    attendance = [];
+    if (data) {
+      Object.keys(data).forEach(id => {
+        const r = data[id];
+        attendance.push({
+          ID: String(r.id || id),
+          id: r.id || id,
+          name: r.name || "",
+          grade: r.grade || "",
+          class: r.class || "",
+          parentMobile: r.parentMobile || "",
+          time: r.time || "",
+          date: r.date || date,
+          status: getAttendanceStatus(r.time)
+        });
+      });
+    }
+    updateStats();
+    if (typeof callback === "function") callback();
+  });
+}
+
+// ======================= تحديث الإحصائيات =======================
+function updateStats() {
+  const total = students.length;
+  const present = attendance.filter(a => getAttendanceStatus(a.time) === "حاضر").length;
+  const late = attendance.filter(a => getAttendanceStatus(a.time) === "متأخر").length;
+  const absent = total - present - late;
+
+  const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+
+  document.getElementById("adminTotalStudents").textContent = total;
+  document.getElementById("adminPresent").textContent = present;
+  document.getElementById("adminLate").textContent = late;
+  document.getElementById("adminAbsent").textContent = absent;
+  document.getElementById("adminRate").textContent = rate + "%";
+
+  drawCharts(absent, late);
+}
+
+// ======================= الرسوم البيانية =======================
+let dailyAbsenceChart, dailyLateChart, gradeAbsenceChart;
+
+function drawCharts(absentCount, lateCount) {
+  const ctx1 = document.getElementById("dailyAbsenceChart").getContext("2d");
+  const ctx2 = document.getElementById("dailyLateChart").getContext("2d");
+  const ctx3 = document.getElementById("gradeAbsenceChart").getContext("2d");
+
+  if (dailyAbsenceChart) dailyAbsenceChart.destroy();
+  if (dailyLateChart) dailyLateChart.destroy();
+  if (gradeAbsenceChart) gradeAbsenceChart.destroy();
+
+  dailyAbsenceChart = new Chart(ctx1, {
+    type: "bar",
+    data: {
+      labels: ["اليوم"],
+      datasets: [{
+        label: "عدد الغياب",
+        data: [absentCount],
+        backgroundColor: "#ef4444"
+      }]
+    }
+  });
+
+  dailyLateChart = new Chart(ctx2, {
+    type: "bar",
+    data: {
+      labels: ["اليوم"],
+      datasets: [{
+        label: "عدد المتأخرين",
+        data: [lateCount],
+        backgroundColor: "#f97316"
+      }]
+    }
+  });
+
+  const gradeMap = {};
+  students.forEach(s => {
+    gradeMap[s.grade] = gradeMap[s.grade] || { total: 0, absent: 0 };
+    gradeMap[s.grade].total++;
+  });
+
+  lastAbsent.forEach(a => {
+    if (!gradeMap[a.grade]) gradeMap[a.grade] = { total: 0, absent: 0 };
+    gradeMap[a.grade].absent++;
+  });
+
+  const labels = Object.keys(gradeMap);
+  const dataAbs = labels.map(g => gradeMap[g].absent);
+
+  gradeAbsenceChart = new Chart(ctx3, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "غياب حسب الصف",
+        data: dataAbs,
+        backgroundColor: "#3b82f6"
+      }]
+    }
+  });
+}
+
+function loadAdminDashboard() {
+  updateStats();
+}
+// ======================= عرض الحضور =======================
+function renderAttendance() {
+  const tbody = document.querySelector("#attendanceTable tbody");
+  tbody.innerHTML = "";
+
+  if (attendance.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="py-3 text-center text-gray-500">لا يوجد حضور مسجل اليوم</td></tr>`;
+    return;
+  }
+
+  attendance.forEach(r => {
+    const status = getAttendanceStatus(r.time);
+
+    tbody.innerHTML += `
+      <tr class="border-b">
+        <td class="px-3 py-2">${r.ID}</td>
+        <td class="px-3 py-2">${r.name}</td>
+        <td class="px-3 py-2">${r.grade}</td>
+        <td class="px-3 py-2">${r.class}</td>
+        <td class="px-3 py-2">${r.parentMobile}</td>
+        <td class="px-3 py-2">${r.time}</td>
+        <td class="px-3 py-2">${r.date}</td>
+        <td class="px-3 py-2">${status}</td>
+      </tr>
+    `;
+  });
+}
+
+// ======================= عرض المتأخرين =======================
+function renderLate() {
+  const tbody = document.querySelector("#lateTable tbody");
+  tbody.innerHTML = "";
+
+  const lateList = attendance.filter(r => getAttendanceStatus(r.time) === "متأخر");
+
+  if (lateList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="py-3 text-center text-gray-500">لا يوجد متأخرون اليوم</td></tr>`;
+    return;
+  }
+
+  lateList.forEach(r => {
+    tbody.innerHTML += `
+      <tr class="border-b">
+        <td class="px-3 py-2">${r.ID}</td>
+        <td class="px-3 py-2">${r.name}</td>
+        <td class="px-3 py-2">${r.grade}</td>
+        <td class="px-3 py-2">${r.class}</td>
+        <td class="px-3 py-2">${r.time}</td>
+        <td class="px-3 py-2">${r.date}</td>
+      </tr>
+    `;
+  });
+}
+
+// ======================= عرض الغياب =======================
+function renderAbsent() {
+  const tbody = document.querySelector("#absentTable tbody");
+  tbody.innerHTML = "";
+
+  if (students.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="py-3 text-center text-gray-500">الرجاء تحميل قائمة الطلاب أولاً</td></tr>`;
+    lastAbsent = [];
+    updateStats();
+    return;
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  const presentIDs = new Set(attendance.map(a => a.ID));
+
+  const absent = students.filter(s => {
+    if (presentIDs.has(s.ID)) {
+        const rec = attendance.find(a => a.ID === s.ID);
+        return getAttendanceStatus(rec.time) === "غائب";
+    }
+    return true;
+  });
+
+  lastAbsent = absent;
+
+  if (absent.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="py-3 text-center text-green-600">لا يوجد غياب اليوم</td></tr>`;
+  } else {
+    absent.forEach(s => {
+      tbody.innerHTML += `
+        <tr class="border-b">
+          <td class="px-3 py-2">${s.ID}</td>
+          <td class="px-3 py-2">${s.name}</td>
+          <td class="px-3 py-2">${s.grade}</td>
+          <td class="px-3 py-2">${s.class}</td>
+          <td class="px-3 py-2">${today}</td>
+        </tr>
+      `;
+    });
+  }
+
+  updateStats();
+}
+
+// ======================= البحث بين تاريخين =======================
+async function searchBetweenDates() {
+  const id = document.getElementById("searchID").value.trim();
+  const from = document.getElementById("searchFrom").value;
+  const to = document.getElementById("searchTo").value;
+
+  const tbody = document.querySelector("#searchResultTable tbody");
+  tbody.innerHTML = "";
+
+  if (!id || !from || !to) {
+    alert("الرجاء إدخال رقم الطالب وتحديد الفترة الزمنية");
+    return;
+  }
+
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+
+  const stu = students.find(s => s.ID == id);
+  if (!stu) {
+    alert("لم يتم العثور على الطالب في قائمة الطلاب");
+    return;
+  }
+
+  const results = [];
+
+  for (let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate() + 1)) {
+    const ds = d.toISOString().split("T")[0];
+    const ref = db.ref("attendance/" + ds + "/" + id);
+    const snap = await ref.once("value");
+
+    if (!snap.exists()) {
+      results.push({
+        ID: id,
+        name: stu.name,
+        grade: stu.grade,
+        class: stu.class,
+        date: ds,
+        status: "غائب"
+      });
+    }
+  }
+
+  if (results.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="py-3 text-center text-red-600">لا توجد حالات غياب في هذه الفترة</td></tr>`;
+    return;
+  }
+
+  results.forEach(r => {
+    tbody.innerHTML += `
+      <tr align="center" class="border-b">
+        <td>${r.ID}</td>
+        <td>${r.name}</td>
+        <td>${r.grade}</td>
+        <td>${r.class}</td>
+        <td>${r.date}</td>
+        <td>${r.status}</td>
+      </tr>
+    `;
+  });
+}
+
+// ======================= استيراد الطلاب من Excel =======================
+document.getElementById("btnImportExcel").onclick = () => {
+  const file = document.getElementById("excelFile").files[0];
+  if (!file) return alert("اختر ملف Excel أولاً");
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const wb = XLSX.read(e.target.result, { type: "array" });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet);
+
+    students = json.map((r) => ({
+      ID: String(r.ID || "").trim(),
+      name: r.Name || "",
+      grade: r.Grade || "",
+      class: r.Class || "",
+      parentMobile: String(r.ParentMobile || "").trim(),
+      token: Math.random().toString(36).substring(2, 10)
+    }));
+
+    document.getElementById("excelStatus").textContent =
+      "تم استيراد " + students.length + " طالب.";
+
+    renderStudents();
+    updateStats();
+  };
+
+  reader.readAsArrayBuffer(file);
+};
+
+// ======================= عرض الطلاب + QR =======================
+function renderStudents() {
+  let html = `
+<table class="min-w-full text-sm">
+<thead class="bg-green-700 text-white">
+<tr>
+<th class="px-3 py-2">ID</th>
+<th class="px-3 py-2">الاسم</th>
+<th class="px-3 py-2">الصف</th>
+<th class="px-3 py-2">الفصل</th>
+<th class="px-3 py-2">الجوال</th>
+<th class="px-3 py-2">QR</th>
+<th class="px-3 py-2">SMS</th>
+</tr>
+</thead>
+<tbody>
+`;
+
+  students.forEach((s) => {
+    const qrData = JSON.stringify({
+      ID: s.ID,
+      TOKEN: s.token,
+      NAME: s.name,
+      GRADE: s.grade,
+      CLASS: s.class,
+      parentMobile: s.parentMobile
+    });
+
+    const qrUrl =
+      "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
+      encodeURIComponent(qrData);
+
+    html += `
+<tr class="border-b">
+<td class="px-3 py-2">${s.ID}</td>
+<td class="px-3 py-2">${s.name}</td>
+<td class="px-3 py-2">${s.grade}</td>
+<td class="px-3 py-2">${s.class}</td>
+<td class="px-3 py-2">${s.parentMobile}</td>
+<td class="px-3 py-2"><img src="${qrUrl}" class="w-16 mx-auto"/></td>
+<td class="px-3 py-2">
+<button onclick="openSMSModal('${s.ID}')" class="moe-btn px-3 py-1 rounded text-xs">SMS</button>
+</td>
+</tr>
+`;
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("studentsContainer").innerHTML = html;
+}
+
+// ======================= SMS =======================
+function openSMSModal(id) {
+  smsTarget = students.find((s) => s.ID == id) || attendance.find(a => a.ID == id);
+  if (!smsTarget) {
+    alert("لا يمكن العثور على بيانات الطالب");
+    return;
+  }
+  document.getElementById("smsTargetLabel").textContent =
+    `إرسال رسالة لولي أمر الطالب ${smsTarget.name} (${smsTarget.parentMobile})`;
+  document.getElementById("smsModal").classList.remove("hidden");
+}
+
+function closeSMSModal() {
+  document.getElementById("smsModal").classList.add("hidden");
+}
+
+function normalizeMobile(n) {
+  n = String(n).replace(/\D/g, "");
+  if (n.startsWith("966")) return n;
+  if (n.startsWith("05")) return "966" + n.slice(1);
+  if (n.startsWith("5")) return "966" + n;
+  return n;
+}
+
+async function sendAbsenceSMS(student) {
+  try {
+    const mobile = normalizeMobile(student.parentMobile);
+    if (!mobile) {
+      console.warn("رقم غير صالح:", student.parentMobile);
+      return;
+    }
+
+    const firstName = student.name.split(" ")[0];
+    const hijriDate = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    }).format(new Date());
+
+    const stamp = new Date().getTime().toString().slice(-4);
+
+    const msg = `ابنكم ${firstName} غاب عن المدرسة اليوم ${hijriDate} – ${stamp}`;
+
+    const payload = {
+      number: mobile,
+      senderName: "School1",
+      sendAtOption: "NOW",
+      messageBody: msg,
+    };
+
+    const res = await fetch("https://app.mobile.net.sa/api/v1/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await res.json().catch(() => null);
+
+    if (!result || (result.status !== "Success" && result.status !== "success")) {
+      alert("فشل إرسال الرسالة");
+      return;
+    }
+
+    alert("تم إرسال رسالة الغياب");
+
+  } catch (err) {
+    alert("حدث خطأ أثناء الإرسال");
+  }
+}
+
+async function sendAllAbsenceSMS() {
+  if (!lastAbsent || lastAbsent.length === 0) {
+    alert("لا يوجد طلاب غائبين اليوم");
+    return;
+  }
+
+  for (const stu of lastAbsent) {
+    await sendAbsenceSMS(stu);
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  alert("تم إرسال رسائل الغياب لجميع أولياء الأمور");
+}
 // ======================= تصدير الغياب =======================
 function exportAbsence() {
   if (!lastAbsent || lastAbsent.length === 0) {
