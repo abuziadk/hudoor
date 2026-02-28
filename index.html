@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -40,88 +41,84 @@
     color: #444;
 }
 
-body {
-    font-family: "Tajawal", sans-serif;
-    background: linear-gradient(135deg, #f3f6f4, #e7f1ed);
-    min-height: 100vh;
-}
+    body {
+        font-family: "Tajawal", sans-serif;
+        background: linear-gradient(135deg, #f3f6f4, #e7f1ed);
+        min-height: 100vh;
+    }
 
-.moe-green {
-    color: #017c67;
-}
+    .moe-green {
+        color: #017c67;
+    }
 
-.moe-btn {
-    background: linear-gradient(135deg, #017c67, #029a82);
-    color: white;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(1, 124, 103, 0.3);
-}
+    .moe-btn {
+        background: linear-gradient(135deg, #017c67, #029a82);
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(1, 124, 103, 0.3);
+    }
 
-.moe-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(1, 124, 103, 0.4);
-}
+    .moe-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(1, 124, 103, 0.4);
+    }
 
-.moe-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-    border-radius: 18px;
-    border: 3px solid rgba(1, 124, 103, 0.15);
-    padding: 22px;
-    transition: all 0.3s ease;
-}
+    .moe-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        border-radius: 18px;
+        border: 3px solid rgba(1, 124, 103, 0.15);
+        padding: 22px;
+        transition: all 0.3s ease;
+    }
 
-.moe-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-}
+    .moe-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
 
-.tab-btn {
-    transition: all 0.25s ease;
-}
+    .tab-btn {
+        transition: all 0.25s ease;
+    }
 
-.tab-btn:hover {
-    background-color: #d1fae5 !important;
-    transform: translateY(-2px);
-}
+    .tab-btn:hover {
+        background-color: #d1fae5 !important;
+        transform: translateY(-2px);
+    }
 
-.moe-tab-active {
-    background: linear-gradient(135deg, #017c67, #029a82) !important;
-    color: white !important;
-    box-shadow: 0 4px 10px rgba(1, 124, 103, 0.4);
-}
+    .moe-tab-active {
+        background: linear-gradient(135deg, #017c67, #029a82) !important;
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(1, 124, 103, 0.4);
+    }
 
-table th {
-    font-weight: bold;
-    letter-spacing: 0.3px;
-}
+    table th {
+        font-weight: bold;
+        letter-spacing: 0.3px;
+    }
 
-table tr:hover {
-    background-color: #f0fdf4;
-    transition: 0.2s;
-}
+    table tr:hover {
+        background-color: #f0fdf4;
+        transition: 0.2s;
+    }
 
-.btn-export {
-    margin-top: 10px;
-    padding: 7px 14px;
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    color: white;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
+    .btn-export {
+        margin-top: 10px;
+        padding: 7px 14px;
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        color: white;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
 
-.btn-export:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
-}
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    }
 </style>
-
-<!-- Firebase compat -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
 </head>
 
@@ -150,21 +147,24 @@ table tr:hover {
 
 </div>
 
+
 <!-- Tabs -->
 <div class="grid grid-cols-2 md:grid-cols-7 gap-2 mb-6">
 
-<button onclick="openAdminSection()" class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold moe-tab-active" data-target="section-admin">DASHBOARD</button>
+<button onclick="openAdminSection()"class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-admin" > DASHBOARD </button>
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-excel">إنشاء QR</button>
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-scan">مسح QR</button>
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-attendance">الحضور</button>
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-absent">الغياب</button>
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-late">التأخر</button>
+
+<!-- 🔥 زر البحث -->
 <button class="tab-btn bg-gray-200 py-2 rounded-lg font-semibold" data-target="section-search">البحث</button>
 
 </div>
-
 <!-- لوحة المدير -->
-<div id="section-admin" class="section">
+<div id="section-admin" class="section hidden">
+
 
     <!-- البطاقات العلوية -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -187,29 +187,6 @@ table tr:hover {
         <div class="moe-card text-center">
             <p class="text-gray-600 text-sm mb-1">الغياب</p>
             <p id="adminAbsent" class="text-2xl font-bold text-red-600">0</p>
-        </div>
-
-    </div>
-
-    <!-- 🔥 حقول التحكم بالوقت -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-
-        <div class="moe-card text-center">
-            <label class="font-bold text-gray-700">بداية الحضور (StartPresent)</label>
-            <input type="time" id="StartPresent" value="06:00"
-                   class="border p-2 rounded mt-2 text-center w-full">
-        </div>
-
-        <div class="moe-card text-center">
-            <label class="font-bold text-gray-700">نهاية الحضور (EndPresent)</label>
-            <input type="time" id="EndPresent" value="07:30"
-                   class="border p-2 rounded mt-2 text-center w-full">
-        </div>
-
-        <div class="moe-card text-center">
-            <label class="font-bold text-gray-700">نهاية التأخر (EndLate)</label>
-            <input type="time" id="EndLate" value="08:00"
-                   class="border p-2 rounded mt-2 text-center w-full">
         </div>
 
     </div>
@@ -244,9 +221,24 @@ table tr:hover {
 
     </div>
 
+    <!-- مكتبة Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </div>
+
+
+<!-- إنشاء QR -->
+<div id="section-excel" class="section hidden">
+
+    <div class="flex flex-col md:flex-row gap-4 items-center mb-3">
+        <input id="excelFile" type="file" accept=".xls,.xlsx" class="border rounded px-3 py-2 text-sm bg-gray-50" />
+        <button id="btnImportExcel" class="moe-btn px-4 py-2 rounded-lg text-sm font-semibold">استيراد الطلاب</button>
+    </div>
+
+    <div id="excelStatus" class="text-sm text-gray-600 mb-3"></div>
+    <div id="studentsContainer"></div>
+</div>
+
 <!-- مسح QR -->
 <div id="section-scan" class="section hidden">
     <div id="reader" class="w-full max-w-md mx-auto border-2 border-green-700 rounded-xl"></div>
@@ -289,12 +281,12 @@ table tr:hover {
             </thead>
             <tbody></tbody>
         </table>
-
-        <button onclick="sendAllAbsenceSMS()" class="btn-export" style="background:#047857">
-            إرسال رسائل الغياب
-        </button>
+		<button onclick="sendAllAbsenceSMS()" class="btn-export" style="background:#047857">
+    إرسال رسائل الغياب
+</button>
 
         <button onclick="exportAbsence()" class="btn-export">تصدير الغياب</button>
+		
     </div>
 </div>
 
@@ -318,7 +310,7 @@ table tr:hover {
     </div>
 </div>
 
-<!-- البحث -->
+<!-- 🔥 قسم البحث (بعد دمج بحث بين تاريخين) -->
 <div id="section-search" class="section hidden">
     <h2 class="text-xl font-bold moe-green mb-4">البحث عن غياب طالب</h2>
 
@@ -365,103 +357,84 @@ table tr:hover {
         </table>
     </div>
 </div>
-
-<!-- قسم إنشاء QR -->
-<div id="section-excel" class="section hidden">
-    <div class="moe-card mb-4">
-        <h2 class="text-xl font-bold moe-green mb-3">استيراد الطلاب من Excel</h2>
-        <input type="file" id="excelFile" class="mb-3" />
-        <button id="btnImportExcel" class="moe-btn px-4 py-2 rounded-lg">استيراد</button>
-        <p id="excelStatus" class="mt-2 text-sm text-gray-600"></p>
-    </div>
-
-    <div class="moe-card" id="studentsContainer">
-        <!-- سيتم تعبئته بالطلاب + QR -->
-    </div>
-</div>
-
-<!-- مودال SMS -->
-<div id="smsModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden">
-  <div class="bg-white rounded-xl p-6 max-w-md w-full">
-    <h3 class="text-lg font-bold mb-3 moe-green">إرسال رسالة SMS</h3>
-    <p id="smsTargetLabel" class="mb-3 text-sm text-gray-700"></p>
-    <p class="text-xs text-gray-500 mb-4">سيتم إرسال رسالة غياب تلقائية لولي الأمر.</p>
-    <div class="flex justify-end gap-2">
-      <button onclick="closeSMSModal()" class="px-3 py-1 rounded bg-gray-200 text-sm">إلغاء</button>
-      <button onclick="sendAbsenceSMS(smsTarget)" class="px-3 py-1 rounded bg-green-600 text-white text-sm">إرسال</button>
-    </div>
-  </div>
-</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <script>
-// ======================= Firebase config =======================
-const firebaseConfig = {
-  apiKey: "AIzaSyCtzKF6tPdNF9NP34xbz0VNALLU_pW5Tkw",
-  authDomain: "attendancesystem-d46ba.firebaseapp.com",
-  databaseURL: "https://attendancesystem-d46ba-default-rtdb.firebaseio.com/",
-  projectId: "attendancesystem-d46ba",
-  storageBucket: "attendancesystem-d46ba.firebasestorage.app",
-  messagingSenderId: "472598700266",
-  appId: "1:472598700266:web:de916774d90fbe518cb793",
-  measurementId: "G-Z6YXDGFHRY"
-};
+/* ===========================================================
+   🔥 دوال الوقت والتاريخ
+=========================================================== */
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+function formatTime(isoString) {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  return date.toLocaleTimeString("ar-SA", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+}
 
-// ======================= الوقت والتاريخ =======================
+function formatDate(isoString) {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  return date.toLocaleDateString("ar-SA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+}
+
+function openAdminSection() {
+    // إخفاء كل الأقسام
+    document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
+
+    // إظهار لوحة المدير
+    document.getElementById("section-admin").classList.remove("hidden");
+
+    // تأخير بسيط حتى تظهر العناصر ثم نرسم الرسوم
+    setTimeout(() => {
+        loadAdminDashboard();
+    }, 200);
+}
+
+/* ===========================================================
+   🔥 تحويل التاريخ للميلادي → هجري
+=========================================================== */
+function toHijri(dateInput) {
+    if (!dateInput) return "";
+
+    const date = new Date(dateInput);
+
+    const formatted = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    }).format(date);
+
+    return formatted 
+}
+
 document.getElementById("todayLabel").textContent =
   new Date().toLocaleDateString("ar-SA");
 
-// ======================= المتغيرات العامة =======================
+/* ===========================================================
+   🔥 المتغيرات العامة
+=========================================================== */
+const API_URL = "https://script.google.com/macros/s/AKfycbw3F5TiR_sP9L3-LdndSbBgQ799SkjST48B5Lhv-bcHFdqVMcLxcf9dmcmybetIWfjNFA/exec";
+	const SMS_API_URL = "https://app.mobile.net.sa/api/v1/send";
+const SMS_BALANCE_URL = "https://app.mobile.net.sa/api/v1/get-balance";
+const SMS_API_KEY = "XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr";
+const SMS_SENDER_NAME = "School1";
+
 let students = [];
 let attendance = [];
-let lastAbsent = [];
 let scanner = null;
 let smsTarget = null;
 
-// ======================= نظام الوقت اليدوي =======================
-let START_PRESENT = "06:00";
-let END_PRESENT = "07:30";
-let END_LATE = "08:00";
-
-document.getElementById("StartPresent").addEventListener("change", e => {
-    START_PRESENT = e.target.value;
-});
-
-document.getElementById("EndPresent").addEventListener("change", e => {
-    END_PRESENT = e.target.value;
-});
-
-document.getElementById("EndLate").addEventListener("change", e => {
-    END_LATE = e.target.value;
-});
-
-// ======================= دالة تحديد حالة الطالب =======================
-function getAttendanceStatus(timeStr) {
-    if (!timeStr) return "غائب";
-
-    const [h, m] = timeStr.replace("م","").replace("ص","").split(":").map(Number);
-    const studentMin = h * 60 + m;
-
-    const [sH, sM] = START_PRESENT.split(":").map(Number);
-    const startMin = sH * 60 + sM;
-
-    const [eH, eM] = END_PRESENT.split(":").map(Number);
-    const endPresentMin = eH * 60 + eM;
-
-    const [lH, lM] = END_LATE.split(":").map(Number);
-    const endLateMin = lH * 60 + lM;
-
-    if (studentMin < startMin) return "غير محسوب";
-    if (studentMin <= endPresentMin) return "حاضر";
-    if (studentMin <= endLateMin) return "متأخر";
-    return "غائب";
-}
-
-// ======================= نظام التابات =======================
+/* ===========================================================
+   🔥 نظام التابات
+=========================================================== */
 document.querySelectorAll(".tab-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".section").forEach((s) => s.classList.add("hidden"));
@@ -472,276 +445,58 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
     );
     btn.classList.add("moe-tab-active");
 
-    const today = new Date().toISOString().split("T")[0];
-
-    if (btn.dataset.target === "section-scan") {
-      setTimeout(() => startScanner(), 500);
-    }
-    if (btn.dataset.target === "section-attendance") {
-      loadAttendanceFromFirebase(today, () => renderAttendance());
-    }
-    if (btn.dataset.target === "section-absent") {
-      loadAttendanceFromFirebase(today, () => renderAbsent());
-    }
-    if (btn.dataset.target === "section-late") {
-      loadAttendanceFromFirebase(today, () => renderLate());
-    }
-    if (btn.dataset.target === "section-admin") {
-      loadAttendanceFromFirebase(today, () => loadAdminDashboard());
-    }
+    if (btn.dataset.target === "section-scan") setTimeout(() => startScanner(), 500);
+    if (btn.dataset.target === "section-attendance") renderAttendance();
+    if (btn.dataset.target === "section-absent") renderAbsent();
+    if (btn.dataset.target === "section-late") renderLate();
+    if (btn.dataset.target === "section-admin") loadDashboard();
   });
 });
 
-// ======================= لوحة المدير =======================
-function openAdminSection() {
-  document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
-  document.getElementById("section-admin").classList.remove("hidden");
-  const today = new Date().toISOString().split("T")[0];
-  setTimeout(() => {
-    loadAttendanceFromFirebase(today, () => loadAdminDashboard());
-  }, 200);
-}
+/* ===========================================================
+   🔥 دالة البحث بتاريخ واحد
 
-// ======================= تحميل الحضور من Firebase =======================
-function loadAttendanceFromFirebase(date, callback) {
-  const ref = db.ref("attendance/" + date);
-  ref.once("value").then(snapshot => {
-    const data = snapshot.val();
-    attendance = [];
-    if (data) {
-      Object.keys(data).forEach(id => {
-        const r = data[id];
-        attendance.push({
-          ID: String(r.id || id),
-          id: r.id || id,
-          name: r.name || "",
-          grade: r.grade || "",
-          class: r.class || "",
-          parentMobile: r.parentMobile || "",
-          time: r.time || "",
-          date: r.date || date,
-          status: getAttendanceStatus(r.time)
-        });
-      });
-    }
-    updateStats();
-    if (typeof callback === "function") callback();
-  });
-}
-
-// ======================= تحديث الإحصائيات =======================
-function updateStats() {
-  const total = students.length;
-  const present = attendance.filter(a => getAttendanceStatus(a.time) === "حاضر").length;
-  const late = attendance.filter(a => getAttendanceStatus(a.time) === "متأخر").length;
-  const absent = total - present - late;
-
-  const rate = total > 0 ? Math.round((present / total) * 100) : 0;
-
-  document.getElementById("adminTotalStudents").textContent = total;
-  document.getElementById("adminPresent").textContent = present;
-  document.getElementById("adminLate").textContent = late;
-  document.getElementById("adminAbsent").textContent = absent;
-  document.getElementById("adminRate").textContent = rate + "%";
-
-  drawCharts(absent, late);
-}
-
-// ======================= الرسوم البيانية =======================
-let dailyAbsenceChart, dailyLateChart, gradeAbsenceChart;
-
-function drawCharts(absentCount, lateCount) {
-  const ctx1 = document.getElementById("dailyAbsenceChart").getContext("2d");
-  const ctx2 = document.getElementById("dailyLateChart").getContext("2d");
-  const ctx3 = document.getElementById("gradeAbsenceChart").getContext("2d");
-
-  if (dailyAbsenceChart) dailyAbsenceChart.destroy();
-  if (dailyLateChart) dailyLateChart.destroy();
-  if (gradeAbsenceChart) gradeAbsenceChart.destroy();
-
-  dailyAbsenceChart = new Chart(ctx1, {
-    type: "bar",
-    data: {
-      labels: ["اليوم"],
-      datasets: [{
-        label: "عدد الغياب",
-        data: [absentCount],
-        backgroundColor: "#ef4444"
-      }]
-    }
-  });
-
-  dailyLateChart = new Chart(ctx2, {
-    type: "bar",
-    data: {
-      labels: ["اليوم"],
-      datasets: [{
-        label: "عدد المتأخرين",
-        data: [lateCount],
-        backgroundColor: "#f97316"
-      }]
-    }
-  });
-
-  const gradeMap = {};
-  students.forEach(s => {
-    gradeMap[s.grade] = gradeMap[s.grade] || { total: 0, absent: 0 };
-    gradeMap[s.grade].total++;
-  });
-
-  lastAbsent.forEach(a => {
-    if (!gradeMap[a.grade]) gradeMap[a.grade] = { total: 0, absent: 0 };
-    gradeMap[a.grade].absent++;
-  });
-
-  const labels = Object.keys(gradeMap);
-  const dataAbs = labels.map(g => gradeMap[g].absent);
-
-  gradeAbsenceChart = new Chart(ctx3, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "غياب حسب الصف",
-        data: dataAbs,
-        backgroundColor: "#3b82f6"
-      }]
-    }
-  });
-}
-
-function loadAdminDashboard() {
-  updateStats();
-}
-
-// ======================= جلب رصيد الرسائل =======================
-async function loadSMSBalance() {
-    try {
-        const res = await fetch("https://app.mobile.net.sa/api/v1/get-balance", {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr"
-            }
-        });
-
-        const data = await res.json().catch(() => null);
-		console.log("BALANCE RESPONSE:", data);
-
-        if (!data || data.balance === undefined) {
-            document.getElementById("smsBalance").textContent = "تعذر جلب الرصيد";
-            return;
-        }
-
-        document.getElementById("smsBalance").textContent =
-            "رصيد الرسائل: " + data.balance;
-
-    } catch (e) {
-        document.getElementById("smsBalance").textContent = "خطأ في الاتصال";
-    }
-}
-</script>
-<script>
-// ======================= عرض الحضور =======================
-function renderAttendance() {
-  const tbody = document.querySelector("#attendanceTable tbody");
+=========================================================== */
+function searchAbsenceByDate() {
+  const id = document.getElementById("searchID").value.trim();
+  const date = document.getElementById("searchDate")?.value?.trim();
+  const tbody = document.querySelector("#searchResultTable tbody");
   tbody.innerHTML = "";
 
-  if (attendance.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" class="py-3 text-center text-gray-500">لا يوجد حضور مسجل اليوم</td></tr>`;
+  if (!id || !date) {
+    alert("الرجاء إدخال رقم الطالب والتاريخ");
     return;
   }
 
-  attendance.forEach(r => {
-    const status = getAttendanceStatus(r.time);
+  const results = attendance.filter(r =>
+    r.ID == id &&
+    r.date.startsWith(date) &&
+    r.status.trim() === "غائب"
+  );
 
+  if (results.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="py-3 text-center text-red-600">لا توجد نتائج</td></tr>`;
+    return;
+  }
+
+  results.forEach(r => {
     tbody.innerHTML += `
-      <tr class="border-b">
-        <td class="px-3 py-2">${r.ID}</td>
-        <td class="px-3 py-2">${r.name}</td>
-        <td class="px-3 py-2">${r.grade}</td>
-        <td class="px-3 py-2">${r.class}</td>
-        <td class="px-3 py-2">${r.parentMobile}</td>
-        <td class="px-3 py-2">${r.time}</td>
-        <td class="px-3 py-2">${r.date}</td>
-        <td class="px-3 py-2">${status}</td>
+      <tr align="center" class="border-b">
+        <td>${r.ID}</td>
+        <td>${r.name}</td>
+        <td>${r.grade}</td>
+        <td>${r.class}</td>
+        <td>${formatDate(r.date)}</td>
+        <td>${r.status}</td>
       </tr>
     `;
   });
 }
 
-// ======================= عرض المتأخرين =======================
-function renderLate() {
-  const tbody = document.querySelector("#lateTable tbody");
-  tbody.innerHTML = "";
-
-  const lateList = attendance.filter(r => getAttendanceStatus(r.time) === "متأخر");
-
-  if (lateList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="py-3 text-center text-gray-500">لا يوجد متأخرون اليوم</td></tr>`;
-    return;
-  }
-
-  lateList.forEach(r => {
-    tbody.innerHTML += `
-      <tr class="border-b">
-        <td class="px-3 py-2">${r.ID}</td>
-        <td class="px-3 py-2">${r.name}</td>
-        <td class="px-3 py-2">${r.grade}</td>
-        <td class="px-3 py-2">${r.class}</td>
-        <td class="px-3 py-2">${r.time}</td>
-        <td class="px-3 py-2">${r.date}</td>
-      </tr>
-    `;
-  });
-}
-
-// ======================= عرض الغياب =======================
-function renderAbsent() {
-  const tbody = document.querySelector("#absentTable tbody");
-  tbody.innerHTML = "";
-
-  if (students.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="py-3 text-center text-gray-500">الرجاء تحميل قائمة الطلاب أولاً</td></tr>`;
-    lastAbsent = [];
-    updateStats();
-    return;
-  }
-
-  const today = new Date().toISOString().split("T")[0];
-  const presentIDs = new Set(attendance.map(a => a.ID));
-
-  const absent = students.filter(s => {
-    if (presentIDs.has(s.ID)) {
-        const rec = attendance.find(a => a.ID === s.ID);
-        return getAttendanceStatus(rec.time) === "غائب";
-    }
-    return true;
-  });
-
-  lastAbsent = absent;
-
-  if (absent.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="py-3 text-center text-green-600">لا يوجد غياب اليوم</td></tr>`;
-  } else {
-    absent.forEach(s => {
-      tbody.innerHTML += `
-        <tr class="border-b">
-          <td class="px-3 py-2">${s.ID}</td>
-          <td class="px-3 py-2">${s.name}</td>
-          <td class="px-3 py-2">${s.grade}</td>
-          <td class="px-3 py-2">${s.class}</td>
-          <td class="px-3 py-2">${today}</td>
-        </tr>
-      `;
-    });
-  }
-
-  updateStats();
-}
-
-// ======================= البحث بين تاريخين =======================
-async function searchBetweenDates() {
+/* ===========================================================
+   🔥 دالة البحث بين تاريخين (غياب فقط)
+=========================================================== */
+function searchBetweenDates() {
   const id = document.getElementById("searchID").value.trim();
   const from = document.getElementById("searchFrom").value;
   const to = document.getElementById("searchTo").value;
@@ -757,33 +512,16 @@ async function searchBetweenDates() {
   const fromDate = new Date(from);
   const toDate = new Date(to);
 
-  const stu = students.find(s => s.ID == id);
-  if (!stu) {
-    alert("لم يتم العثور على الطالب في قائمة الطلاب");
-    return;
-  }
+  const results = attendance.filter(r => {
+    if (r.ID != id) return false;
+    if (r.status.trim() !== "غائب") return false;
 
-  const results = [];
-
-  for (let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate() + 1)) {
-    const ds = d.toISOString().split("T")[0];
-    const ref = db.ref("attendance/" + ds + "/" + id);
-    const snap = await ref.once("value");
-
-    if (!snap.exists()) {
-      results.push({
-        ID: id,
-        name: stu.name,
-        grade: stu.grade,
-        class: stu.class,
-        date: ds,
-        status: "غائب"
-      });
-    }
-  }
+    const d = new Date(r.date);
+    return d >= fromDate && d <= toDate;
+  });
 
   if (results.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="py-3 text-center text-red-600">لا توجد حالات غياب في هذه الفترة</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="py-3 text-center text-red-600">لا توجد نتائج في هذه الفترة</td></tr>`;
     return;
   }
 
@@ -794,14 +532,16 @@ async function searchBetweenDates() {
         <td>${r.name}</td>
         <td>${r.grade}</td>
         <td>${r.class}</td>
-        <td>${r.date}</td>
+        <td>${formatDate(r.date)}</td>
         <td>${r.status}</td>
       </tr>
     `;
   });
 }
 
-// ======================= استيراد الطلاب من Excel =======================
+/* ===========================================================
+   🔥 استيراد الطلاب من Excel
+=========================================================== */
 document.getElementById("btnImportExcel").onclick = () => {
   const file = document.getElementById("excelFile").files[0];
   if (!file) return alert("اختر ملف Excel أولاً");
@@ -825,13 +565,105 @@ document.getElementById("btnImportExcel").onclick = () => {
       "تم استيراد " + students.length + " طالب.";
 
     renderStudents();
+    students.forEach((s) => saveStudentToSheet(s));
     updateStats();
   };
 
   reader.readAsArrayBuffer(file);
 };
 
-// ======================= عرض الطلاب + QR =======================
+function saveStudentToSheet(s) {
+  const form = new URLSearchParams();
+  form.append("action", "addStudent");
+  form.append("ID", s.ID);
+  form.append("name", s.name);
+  form.append("grade", s.grade);
+  form.append("class", s.class);
+  form.append("parentMobile", s.parentMobile);
+  form.append("token", s.token);
+  fetch(API_URL, { method: "POST", body: form });
+}
+function getFirstName(fullName) {
+    if (!fullName) return "";
+    return fullName.split(" ")[0]; // يأخذ أول كلمة فقط
+}
+
+async function sendAbsenceSMS(student) {
+    try {
+        const mobile = normalizeMobile(student.parentMobile);
+        if (!mobile) {
+            console.warn("رقم غير صالح:", student.parentMobile);
+            return;
+        }
+
+        const firstName = getFirstName(student.name);
+        const hijriDate = toHijri(new Date());
+
+        // 🔥 رقم متغير يمنع رفض الرسالة بسبب duplicate message
+        const stamp = new Date().getTime().toString().slice(-4);
+
+        // 🔥 الرسالة النهائية بعد الدمج
+        const msg = `ابنكم ${firstName} غاب عن المدرسة اليوم ${hijriDate} – ${stamp}`;
+
+        const payload = {
+            number: mobile,
+            senderName: SMS_SENDER_NAME,
+            sendAtOption: "NOW",
+            messageBody: msg,
+        };
+
+        const res = await fetch(SMS_API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + SMS_API_KEY,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const result = await res.json().catch(() => null);
+
+        console.log("رد API:", result);
+
+        if (!result) {
+            alert("لم يتم استلام رد من مزود الخدمة");
+            return;
+        }
+
+        if (result.status !== "Success" && result.status !== "success") {
+            alert("فشل إرسال الرسالة: " + JSON.stringify(result));
+            return;
+        }
+
+        console.log("تم إرسال رسالة الغياب إلى:", student.name);
+
+    } catch (err) {
+        console.error("خطأ أثناء إرسال رسالة الغياب:", err);
+        alert("حدث خطأ أثناء الإرسال: " + err.message);
+    }
+}
+
+
+async function sendAllAbsenceSMS() {
+    const absent = attendance.filter(r => r.status.trim() === "غائب");
+
+    if (absent.length === 0) {
+        alert("لا يوجد طلاب غائبين اليوم");
+        return;
+    }
+
+    for (const stu of absent) {
+        await sendAbsenceSMS(stu);
+        await new Promise(r => setTimeout(r, 500)); // مهلة نصف ثانية بين الرسائل
+    }
+
+    alert("تم إرسال رسائل الغياب لجميع أولياء الأمور");
+}
+
+
+/* ===========================================================
+   🔥 عرض الطلاب + QR
+=========================================================== */
 function renderStudents() {
   let html = `
 <table class="min-w-full text-sm">
@@ -882,7 +714,9 @@ function renderStudents() {
   document.getElementById("studentsContainer").innerHTML = html;
 }
 
-// ======================= SMS =======================
+/* ===========================================================
+   🔥 SMS
+=========================================================== */
 function openSMSModal(id) {
   smsTarget = students.find((s) => s.ID == id) || attendance.find(a => a.ID == id);
   if (!smsTarget) {
@@ -906,153 +740,529 @@ function normalizeMobile(n) {
   return n;
 }
 
-async function sendAbsenceSMS(student) {
-  try {
-    const mobile = normalizeMobile(student.parentMobile);
-    if (!mobile) {
-      console.warn("رقم غير صالح:", student.parentMobile);
-      return;
+async function loadStudentsFromSheet() {
+    try {
+        const res = await fetch(API_URL + "?action=getStudents");
+        const data = await res.json();
+
+        students = data.map(s => ({
+            ID: String(s.ID).trim(),
+            name: s.name,
+            grade: s.grade,
+            class: s.class,
+            parentMobile: String(s.parentMobile).trim(),
+            token: s.token
+        }));
+console.log("عدد الطلاب المحمّلين:", students.length);
+
+        console.log("تم تحميل الطلاب:", students.length);
+
+        updateStats(); // ← مهم جداً
+
+    } catch (e) {
+        console.error("خطأ في تحميل الطلاب:", e);
     }
+}
 
-    const firstName = student.name.split(" ")[0];
-    const hijriDate = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    }).format(new Date());
+async function confirmSendSMS() {
+  const msg = document.getElementById("smsMessage").value.trim();
+  if (!msg) return alert("اكتب نص الرسالة");
 
-    const stamp = new Date().getTime().toString().slice(-4);
+  const mobile = normalizeMobile(smsTarget.parentMobile);
+  if (!mobile) return alert("رقم الجوال غير صالح");
 
-    const msg = `ابنكم ${firstName} غاب عن المدرسة اليوم ${hijriDate} – ${stamp}`;
+  const payload = {
+    number: mobile,
+    senderName: SMS_SENDER_NAME,
+    sendAtOption: "NOW",
+    messageBody: msg,
+  };
 
-    const payload = {
-      number: mobile,
-      senderName: "School1",
-      sendAtOption: "NOW",
-      messageBody: msg,
-    };
+  await fetch(SMS_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + SMS_API_KEY,
+    },
+    body: JSON.stringify(payload),
+  });
 
-    const res = await fetch("https://app.mobile.net.sa/api/v1/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr",
-      },
-      body: JSON.stringify(payload),
+  alert("تم إرسال الرسالة");
+  closeSMSModal();
+}
+
+/* ===========================================================
+   🔥 QR Scanner
+=========================================================== */
+function startScanner() {
+  if (scanner) { try { scanner.stop(); } catch(e){} }
+
+  scanner = new Html5Qrcode("reader");
+  const config = {
+    fps: 10,
+    qrbox: { width: 280, height: 280 },
+    aspectRatio: 1.0,
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+  };
+
+  const onScan = (decodedText) => {
+    try { scanner.stop(); } catch(e){}
+    handleQR(decodedText);
+  };
+
+  scanner.start(
+    { facingMode: { exact: "environment" } },
+    config,
+    onScan,
+    () => {}
+  ).catch(() => {
+    Html5Qrcode.getCameras().then((cams) => {
+      if (!cams.length) { alert("لا توجد كاميرات متاحة"); return; }
+
+      let backCam = cams.find(c =>
+        c.label.toLowerCase().includes("back") ||
+        c.label.toLowerCase().includes("rear")
+      );
+
+      let camId = backCam ? backCam.id : cams[0].id;
+
+      scanner.start(
+        camId,
+        config,
+        onScan,
+        () => {}
+      );
+    });
+  });
+}
+
+/* ===========================================================
+   🔥 قراءة QR
+=========================================================== */
+function handleQR(text) {
+  document.getElementById("scanMessage").textContent = "تم المسح ✔";
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    document.getElementById("scanMessage").textContent = "QR غير صالح أو غير مكتمل";
+    return;
+  }
+
+  if (!data.ID || !data.TOKEN) {
+    document.getElementById("scanMessage").textContent =
+      "QR ناقص – لا يمكن تسجيل الحضور";
+    return;
+  }
+
+  recordAttendance({
+    ID: data.ID,
+    name: data.NAME || data.name || "",
+    grade: data.GRADE || data.grade || "",
+    class: data.CLASS || data.class || "",
+    parentMobile: data.parentMobile || data.PARENT || "",
+    token: data.TOKEN || data.token
+  });
+
+  try { scanner.stop(); } catch(e){}
+  setTimeout(() => startScanner(), 1200);
+}
+
+/* ===========================================================
+   🔥 تسجيل الحضور
+=========================================================== */
+function recordAttendance(stu) {
+  if (!stu.ID) { alert("QR غير صالح"); return; }
+
+  const form = new URLSearchParams();
+  form.append("action", "attendance");
+  form.append("ID", stu.ID);
+  form.append("name", stu.name);
+  form.append("grade", stu.grade);
+  form.append("class", stu.class);
+  form.append("parentMobile", stu.parentMobile);
+  form.append("token", stu.token);
+
+  fetch(API_URL, { method: "POST", body: form })
+    .then(r => r.text())
+    .then(msg => {
+      document.getElementById("scanMessage").textContent = msg;
+      loadAttendanceFromSheet();
+    })
+    .catch(e => console.error(e));
+}
+
+/* ===========================================================
+   🔥 تحميل سجل الحضور
+=========================================================== */
+async function loadAttendanceFromSheet() {
+  const res = await fetch(API_URL + "?action=getAttendance");
+  const data = await res.json();
+  attendance = data;
+  updateStats();
+}
+
+/* ===========================================================
+   🔥 عرض الحضور
+=========================================================== */
+function renderAttendance() {
+  const tbody = document.querySelector("#attendanceTable tbody");
+  tbody.innerHTML = "";
+
+  // عرض كل سجلات اليوم: حاضر + متأخر + غائب
+  const todayRecords = attendance.filter(r => {
+    if (!r.date) return false;
+    const dt = new Date(r.date);
+    const today = new Date();
+    return (
+      dt.getFullYear() === today.getFullYear() &&
+      dt.getMonth() === today.getMonth() &&
+      dt.getDate() === today.getDate()
+    );
+  });
+
+  todayRecords.forEach((r) => {
+    tbody.innerHTML += `
+<tr align=center class="border-b">
+  <td>${r.ID}</td>
+  <td>${r.name}</td>
+  <td>${r.grade}</td>
+  <td>${r.class}</td>
+  <td>${r.parentMobile}</td>
+  <td>${formatTime(r.time)}</td>
+  <td>${formatDate(r.date)}</td>
+  <td>${r.status}</td>
+</tr>`;
+  });
+}
+
+/* ===========================================================
+   🔥 عرض الغياب
+=========================================================== */
+function renderAbsent() {
+  const tbody = document.querySelector("#absentTable tbody");
+  tbody.innerHTML = "";
+
+  const absent = attendance.filter(r => r.status.trim() === "غائب");
+
+  absent.forEach((r) => {
+    tbody.innerHTML += `
+<tr align=center class="border-b">
+  <td class="px-3 py-2">${r.ID}</td>
+  <td class="px-3 py-2">${r.name}</td>
+  <td class="px-3 py-2">${r.grade}</td>
+  <td class="px-3 py-2">${r.class}</td>
+  <td class="px-3 py-2">${formatDate(r.date)}</td>
+</tr>`;
+  });
+}
+
+/* ===========================================================
+   🔥 عرض المتأخرين
+=========================================================== */
+function renderLate() {
+  const tbody = document.querySelector("#lateTable tbody");
+  tbody.innerHTML = "";
+
+  const late = attendance.filter(r => r.status.trim() === "متأخر");
+
+  late.forEach((r) => {
+    tbody.innerHTML += `
+<tr align=center class="border-b">
+  <td class="px-3 py-2">${r.ID}</td>
+  <td class="px-3 py-2">${r.name}</td>
+  <td class="px-3 py-2">${r.grade}</td>
+  <td class="px-3 py-2">${r.class}</td>
+  <td class="px-3 py-2">${formatTime(r.time)}</td>
+  <td class="px-3 py-2">${formatDate(r.date)}</td>
+</tr>`;
+  });
+}
+
+/* ===========================================================
+   🔥 إحصائيات لوحة المدير (إصدار محسّن)
+=========================================================== */
+function updateStats() {
+    const totalStudents = students.length;
+
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const d = today.getDate();
+
+    const todayRecords = attendance.filter(a => {
+        if (!a.date) return false;
+        const dt = new Date(a.date);
+        return dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d;
     });
 
-    const result = await res.json().catch(() => null);
+    const presentOnly = todayRecords.filter(a => a.status === "حاضر").length;
+    const late = todayRecords.filter(a => a.status === "متأخر").length;
 
-    if (!result || (result.status !== "Success" && result.status !== "success")) {
-      alert("فشل إرسال الرسالة");
-      return;
+    // المتأخر يعتبر حاضر
+    const present = presentOnly + late;
+
+    const absent = totalStudents - present;
+
+    document.getElementById("adminTotalStudents").textContent = totalStudents;
+    document.getElementById("adminPresent").textContent = present;
+    document.getElementById("adminLate").textContent = late;
+    document.getElementById("adminAbsent").textContent = absent;
+
+    const rate = totalStudents > 0 ? Math.round((present / totalStudents) * 100) : 0;
+    document.getElementById("adminRate").textContent = rate + "%";
+}
+function exportAbsence() {
+    const absent = attendance.filter(r => r.status.trim() === "غائب");
+
+    if (absent.length === 0) {
+        alert("لا يوجد غياب لتصديره");
+        return;
     }
 
-    alert("تم إرسال رسالة الغياب");
+    const rows = absent.map(r => {
+        // استخراج التاريخ فقط بدون الوقت
+        const dateOnly = r.date.split("T")[0]; // مثال: 2026-03-09
 
-  } catch (err) {
-    alert("حدث خطأ أثناء الإرسال");
-  }
+        // تحويل النص إلى أجزاء
+        const parts = dateOnly.split("-");
+        const y = parseInt(parts[0]);
+        const m = parseInt(parts[1]) - 1;
+        const d = parseInt(parts[2]);
+
+        // إنقاص يوم واحد
+        const corrected = new Date(y, m, d, 12, 0, 0);
+
+        // تحويله إلى نص بنفس صيغة yyyy-mm-dd
+        const correctedStr = corrected.toISOString().split("T")[0];
+
+        return {
+            ID: r.ID,
+            الاسم: r.name,
+            الصف: r.grade,
+            الفصل: r.class,
+            التاريخ_الهجري: toHijri(correctedStr)
+        };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    ws['!cols'] = [
+        { wch: 10 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 20 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "الغياب");
+
+    XLSX.writeFile(wb, "غياب_الطلاب_هجري.xlsx");
 }
 
-async function sendAllAbsenceSMS() {
-  if (!lastAbsent || lastAbsent.length === 0) {
-    alert("لا يوجد طلاب غائبين اليوم");
-    return;
-  }
-
-  for (const stu of lastAbsent) {
-    await sendAbsenceSMS(stu);
-    await new Promise(r => setTimeout(r, 500));
-  }
-
-  alert("تم إرسال رسائل الغياب لجميع أولياء الأمور");
-}
-</script>
-<script>
-// ======================= تصدير الغياب =======================
-function exportAbsence() {
-  if (!lastAbsent || lastAbsent.length === 0) {
-    alert("لا يوجد بيانات غياب لتصديرها");
-    return;
-  }
-
-  const wsData = [["ID","الاسم","الصف","الفصل","التاريخ"]];
-  const today = new Date().toISOString().split("T")[0];
-
-  lastAbsent.forEach(s => {
-    wsData.push([s.ID, s.name, s.grade, s.class, today]);
-  });
-
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  XLSX.utils.book_append_sheet(wb, ws, "Absence");
-  XLSX.writeFile(wb, "absence.xlsx");
-}
-
-// ======================= تصدير المتأخرين =======================
 function exportLate() {
-  const lateList = attendance.filter(r => getAttendanceStatus(r.time) === "متأخر");
+    const late = attendance.filter(r => r.status.trim() === "متأخر");
 
-  if (lateList.length === 0) {
-    alert("لا يوجد متأخرون لتصديرهم");
-    return;
-  }
+    if (late.length === 0) {
+        alert("لا يوجد متأخرون لتصديرهم");
+        return;
+    }
 
-  const wsData = [["ID","الاسم","الصف","الفصل","الوقت","التاريخ"]];
+    const rows = late.map(r => {
+        // استخراج التاريخ فقط بدون الوقت
+        const dateOnly = r.date.split("T")[0]; // مثال: 2026-03-09
 
-  lateList.forEach(r => {
-    wsData.push([r.ID, r.name, r.grade, r.class, r.time, r.date]);
+        // تحويل النص إلى أجزاء
+        const parts = dateOnly.split("-");
+        const y = parseInt(parts[0]);
+        const m = parseInt(parts[1]) - 1;
+        const d = parseInt(parts[2]);
+
+        // إنقاص يوم واحد لإصلاح مشكلة UTC
+        const corrected = new Date(y, m, d, 12, 0, 0);
+
+        // تحويله إلى نص yyyy-mm-dd
+        const correctedStr = corrected.toISOString().split("T")[0];
+
+        return {
+            ID: r.ID,
+            الاسم: r.name,
+            الصف: r.grade,
+            الفصل: r.class,
+            الوقت: formatTime(r.time),
+            التاريخ_الهجري: toHijri(correctedStr)
+        };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    ws['!cols'] = [
+        { wch: 10 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 20 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "المتأخرون");
+
+    XLSX.writeFile(wb, "المتأخرون_هجري.xlsx");
+}
+
+/* ===========================================================
+   🔥 رصيد الرسائل
+=========================================================== */
+async function getBalance() {
+  const res = await fetch(SMS_BALANCE_URL, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + SMS_API_KEY },
   });
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  XLSX.utils.book_append_sheet(wb, ws, "Late");
-  XLSX.writeFile(wb, "late.xlsx");
-}
-
-// ======================= ماسح QR =======================
-function startScanner() {
-  document.getElementById("scanMessage").textContent =
-    "هذه الصفحة مخصصة للوحة المدير، المسح يعمل في صفحة الماسح الرئيسية.";
-}
-
-// ======================= التشغيل المبدئي =======================
-(async () => {
-
-  // تشغيل جلب رصيد الرسائل
-  loadSMSBalance();
-
-  const today = new Date().toISOString().split("T")[0];
-
-  // تحميل الطلاب من Google Sheet (اختياري)
+  let balance = "غير متاح";
   try {
-    const res = await fetch(
-      "https://script.google.com/macros/s/AKfycbw3F5TiR_sP9L3-LdndSbBgQ799SkjST48B5Lhv-bcHFdqVMcLxcf9dmcmybetIWfjNFA/exec?action=getStudents"
-    );
     const data = await res.json();
+    balance = data.data.balance;
+  } catch {}
 
-    students = data.map(s => ({
-      ID: String(s.ID).trim(),
-      name: s.name,
-      grade: s.grade,
-      class: s.class,
-      parentMobile: String(s.parentMobile).trim(),
-      token: s.token
-    }));
-  } catch (e) {
-    console.warn("تعذر تحميل الطلاب من الشيت");
-  }
+  document.getElementById("smsBalance").textContent =
+    "رصيد الرسائل: " + balance;
+}
 
-  loadAttendanceFromFirebase(today, () => {
-    loadAdminDashboard();
-  });
+loadStudentsFromSheet();
+loadAttendanceFromSheet();
+updateStats();
 
-})();
+getBalance();
+
+// -----------------------------
+// 1) إحصائيات الغياب اليومي
+// -----------------------------
+function getDailyAbsenceStats() {
+    const stats = {};
+
+    attendance.forEach(r => {
+        if (r.status === "غائب") {
+            const date = r.date.split("T")[0];
+            stats[date] = (stats[date] || 0) + 1;
+        }
+    });
+
+    return stats;
+}
+
+// -----------------------------
+// 2) إحصائيات التأخر اليومي
+// -----------------------------
+function getDailyLateStats() {
+    const stats = {};
+
+    attendance.forEach(r => {
+        if (r.status === "متأخر") {
+            const date = r.date.split("T")[0];
+            stats[date] = (stats[date] || 0) + 1;
+        }
+    });
+
+    return stats;
+}
+
+// -----------------------------
+// 3) مقارنة الصفوف (غياب)
+// -----------------------------
+function getGradeAbsenceStats() {
+    const stats = {};
+
+    attendance.forEach(r => {
+        if (r.status === "غائب") {
+            stats[r.grade] = (stats[r.grade] || 0) + 1;
+        }
+    });
+
+    return stats;
+}
+
+// -----------------------------
+// 4) رسم الغياب اليومي
+// -----------------------------
+function renderDailyAbsenceChart() {
+    const stats = getDailyAbsenceStats();
+
+    new Chart(document.getElementById("dailyAbsenceChart"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(stats),
+            datasets: [{
+                label: "عدد الغياب",
+                data: Object.values(stats),
+                backgroundColor: "#ff4d4d"
+            }]
+        }
+    });
+}
+
+// -----------------------------
+// 5) رسم التأخر اليومي
+// -----------------------------
+function renderDailyLateChart() {
+    const stats = getDailyLateStats();
+
+    new Chart(document.getElementById("dailyLateChart"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(stats),
+            datasets: [{
+                label: "عدد المتأخرين",
+                data: Object.values(stats),
+                backgroundColor: "#4d79ff"
+            }]
+        }
+    });
+}
+
+// -----------------------------
+// 6) رسم مقارنة الصفوف
+// -----------------------------
+function renderGradeAbsenceChart() {
+    const stats = getGradeAbsenceStats();
+
+    new Chart(document.getElementById("gradeAbsenceChart"), {
+        type: "pie",
+        data: {
+            labels: Object.keys(stats),
+            datasets: [{
+                data: Object.values(stats),
+                backgroundColor: [
+                    "#ff9999",
+                    "#66b3ff",
+                    "#99ff99",
+                    "#ffcc99",
+                    "#c299ff",
+                    "#ffb366"
+                ]
+            }]
+        }
+    });
+}
+
+// -----------------------------
+// 7) تشغيل الرسوم عند فتح لوحة المدير
+// -----------------------------
+function loadAdminDashboard() {
+    renderDailyAbsenceChart();
+    renderDailyLateChart();
+    renderGradeAbsenceChart();
+}
+
 </script>
-
-</div>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </body>
 </html>
+
+
+
+
