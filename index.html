@@ -423,12 +423,10 @@ let scanner = null;
 let smsTarget = null;
 
 // ======================= نظام الوقت اليدوي =======================
-// القيم الافتراضية
 let START_PRESENT = "06:00";
 let END_PRESENT = "07:30";
 let END_LATE = "08:00";
 
-// تحديث القيم عند تغييرها من الواجهة
 document.getElementById("StartPresent").addEventListener("change", e => {
     START_PRESENT = e.target.value;
 });
@@ -615,6 +613,35 @@ function drawCharts(absentCount, lateCount) {
 function loadAdminDashboard() {
   updateStats();
 }
+
+// ======================= جلب رصيد الرسائل =======================
+async function loadSMSBalance() {
+    try {
+        const res = await fetch("https://app.mobile.net.sa/api/v1/get-balance", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer XRGdRQaYcesQbFy6rtzS2pOGARSHXBG7yAqC4rDr"
+            }
+        });
+
+        const data = await res.json().catch(() => null);
+		console.log("BALANCE RESPONSE:", data);
+
+        if (!data || data.balance === undefined) {
+            document.getElementById("smsBalance").textContent = "تعذر جلب الرصيد";
+            return;
+        }
+
+        document.getElementById("smsBalance").textContent =
+            "رصيد الرسائل: " + data.balance;
+
+    } catch (e) {
+        document.getElementById("smsBalance").textContent = "خطأ في الاتصال";
+    }
+}
+</script>
+<script>
 // ======================= عرض الحضور =======================
 function renderAttendance() {
   const tbody = document.querySelector("#attendanceTable tbody");
@@ -941,6 +968,8 @@ async function sendAllAbsenceSMS() {
 
   alert("تم إرسال رسائل الغياب لجميع أولياء الأمور");
 }
+</script>
+<script>
 // ======================= تصدير الغياب =======================
 function exportAbsence() {
   if (!lastAbsent || lastAbsent.length === 0) {
@@ -990,12 +1019,16 @@ function startScanner() {
 
 // ======================= التشغيل المبدئي =======================
 (async () => {
+
+  // تشغيل جلب رصيد الرسائل
+  loadSMSBalance();
+
   const today = new Date().toISOString().split("T")[0];
 
-  // تحميل الطلاب من الشيت (اختياري)
+  // تحميل الطلاب من Google Sheet (اختياري)
   try {
     const res = await fetch(
-      "https://script.google.com/macros/s/AKfycbzif8zmJWSVYHeUx-IqA_THoPRZieuYWEJNi-3prV0GQXfkUoY_oCoBZkEacVrcC-u-/exec?action=getStudents"
+      "https://script.google.com/macros/s/AKfycbw3F5TiR_sP9L3-LdndSbBgQ799SkjST48B5Lhv-bcHFdqVMcLxcf9dmcmybetIWfjNFA/exec?action=getStudents"
     );
     const data = await res.json();
 
@@ -1014,6 +1047,7 @@ function startScanner() {
   loadAttendanceFromFirebase(today, () => {
     loadAdminDashboard();
   });
+
 })();
 </script>
 
@@ -1022,4 +1056,3 @@ function startScanner() {
 
 </body>
 </html>
-
